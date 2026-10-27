@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Detalle de venta')}"></head>
+<body class="venta-page documento-page">
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('ventas')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Detalle del documento', 'Productos, importes y pagos')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <div class="notice error" th:if="${venta.estado.name() == 'ANULADO'}">
+                <strong>DOCUMENTO ANULADO · Sin cobros vigentes</strong>
+                <p th:text="${'Anulado: ' + #temporals.format(venta.anuladoEn, 'dd/MM/yyyy HH:mm') + ' · ' + venta.anuladoPor.nombre}"></p>
+                <p th:text="${venta.motivoAnulacion}"></p>
+                <p>El stock fue repuesto. Los importes originales se conservan como historial. Esta acción no realiza devoluciones por Yape ni por banco.</p>
+            </div>
+            <p class="notice" th:if="${venta.documentoOrigenId != null}">Documento copiado de <a th:href="@{/ventas/{id}(id=${venta.documentoOrigenId})}" th:text="${venta.codigoOrigen}"></a>.</p>
+            <section class="dashboard-card documento-card">
+                <div class="card-header"><div><h2><span th:text="${venta.tipo.nombre}"></span> · <span th:text="${venta.codigoDocumento}"></span></h2><p>Documento de prueba sin valor tributario.</p></div><span class="badge" th:classappend="${venta.estado.name() == 'ANULADO' ? 'anulado' : ''}" th:text="${venta.estado.name() == 'BORRADOR' ? 'Pendiente' : venta.estado}"></span></div>
+                <div class="edit-form">
+                    <div class="documento-datos">
+                        <section class="documento-panel"><h3>Cliente</h3><dl>
+                            <div><dt>Nombre o razón social</dt><dd th:text="${venta.confirmadoEn != null ? venta.clienteNombre : (venta.cliente == null ? 'Sin cliente identificado' : venta.cliente.nombre)}"></dd></div>
+                            <div><dt>DNI / RUC / Otro</dt><dd th:text="${(venta.confirmadoEn != null ? venta.clienteDocumento : (venta.cliente == null ? null : venta.cliente.numeroDocumento)) ?: 'Sin documento'}"></dd></div>
+                            <div><dt>Dirección</dt><dd th:text="${(venta.confirmadoEn != null ? venta.clienteDireccion : (venta.cliente == null ? null : venta.cliente.direccion)) ?: 'Sin dirección registrada'}"></dd></div>
+                        </dl></section>
+                        <section class="documento-panel"><h3>Datos del documento</h3><dl>
+                            <div><dt>Punto de venta</dt><dd th:text="${sedeNombre}"></dd></div>
+                            <div><dt th:text="${venta.confirmadoEn != null ? 'Fecha de emisión' : 'Fecha de creación'}"></dt><dd th:text="${#temporals.format(venta.confirmadoEn != null ? venta.confirmadoEn : venta.fecha, 'dd/MM/yyyy HH:mm')}"></dd></div>
+                            <div><dt th:text="${venta.confirmadoEn != null ? 'Emitido por' : 'Registrado por'}"></dt><dd th:text="${venta.confirmadoEn != null ? venta.confirmadoPor.nombre : venta.usuario.nombre}"></dd></div>
+                        </dl></section>
+                    </div>
+                    <section class="documento-panel documento-productos"><h3>Productos del documento</h3>
+                    <div class="table-container"><table class="documento-tabla"><thead><tr><th>Producto</th><th>Unidad</th><th>Cantidad</th><th>Precio S/</th><th>Calculado S/</th><th>A cobrar S/</th></tr></thead><tbody>
+                        <tr th:each="l : ${venta.lineas}"><td th:text="${l.codigo + ' · ' + l.nombre}"></td><td th:text="${l.unidadMedida}"></td><td th:text="${l.cantidad.stripTrailingZeros().toPlainString()}"></td><td th:text="${l.precio}"></td><td th:text="${l.importeCalculado}"></td><td th:text="${l.importeCobrar}"></td></tr>
+                    </tbody></table></div>
+                    <div class="venta-cierre">
+                        <div class="documento-notas"><h3>Detalles generales</h3><p class="detalle-texto" th:text="${#strings.isEmpty(venta.detalles) ? 'Sin detalles adicionales.' : venta.detalles}"></p></div>
+                        <div class="venta-totales"><p><span>Subtotal sin IGV</span><span>S/ <strong th:text="${venta.subtotal}"></strong></span></p><p><span>IGV <span th:text="${venta.tasaIgv.stripTrailingZeros().toPlainString()}"></span>%</span><span>S/ <strong th:text="${venta.igv}"></strong></span></p><p class="total-venta"><span>Total</span><span>S/ <strong th:text="${venta.total}"></strong></span></p><small>Importes en soles · IGV incluido</small></div>
+                    </div>
+                    <section class="documento-pagos" th:if="${venta.tipo.name() != 'COTIZACION'}">
+                        <h3>Forma de pago</h3>
+                        <p th:if="${venta.estado.name() == 'BORRADOR'}" class="help">Abonos preparados: se aplicarán al confirmar la venta. Verifica los pagos en la cuenta de la empresa; escribir un código no verifica el depósito.</p>
+                        <div class="table-container"><table class="documento-tabla-pagos"><thead><tr><th>Medio</th><th>Recibido S/</th><th th:text="${venta.estado.name() == 'BORRADOR' ? 'Por aplicar S/' : 'Aplicado originalmente S/'}"></th><th th:if="${venta.estado.name() == 'ANULADO'}">Revertido S/</th><th>Código de operación</th><th>Banco</th></tr></thead><tbody>
+                            <tr th:each="p : ${venta.pagos}"><td th:text="${p.medio}"></td><td th:text="${p.recibido}"></td><td th:text="${p.aplicado}"></td><td th:if="${venta.estado.name() == 'ANULADO'}" th:text="${p.revertido}"></td><td th:text="${p.referencia ?: '—'}"></td><td th:text="${p.banco ?: '—'}"></td></tr>
+                            <tr th:if="${#lists.isEmpty(venta.pagos)}"><td class="empty" th:colspan="${venta.estado.name() == 'ANULADO' ? 6 : 5}">Sin pagos registrados.</td></tr>
+                        </tbody></table></div>
+                        <div class="pago-resumen"><div><span th:text="${venta.estado.name() == 'BORRADOR' ? 'Recibido / previsto' : (venta.estado.name() == 'ANULADO' ? 'Recibido original' : 'Recibido')}"></span><strong>S/ <span th:text="${venta.recibido.setScale(2)}"></span></strong></div><div class="pago-saldo"><span>Saldo pendiente</span><strong>S/ <span th:text="${venta.saldo.setScale(2)}"></span></strong></div><div><span th:text="${venta.estado.name() == 'ANULADO' ? 'Vuelto original' : 'Vuelto en efectivo'}"></span><strong>S/ <span th:text="${venta.vuelto.setScale(2)}"></span></strong></div></div>
+                    </section>
+                    <p th:if="${venta.estado.name() != 'BORRADOR' and venta.tipo.name() != 'COTIZACION'}" class="documento-cobro">Cobro vigente: <strong>S/ <span th:text="${venta.cobroVigente.setScale(2)}"></span></strong></p>
+                    </section>
+                    <div th:if="${venta.estado.name() == 'BORRADOR'}">
+                        <details th:replace="~{fragments/descartar-venta :: confirmacion(${venta.id}, ${venta.version})}"></details>
+                    </div>
+                    <details class="anulacion-venta" th:if="${venta.estado.name() == 'CONFIRMADO'}">
+                        <summary>Anular venta</summary>
+                        <form class="edit-form" th:action="@{/ventas/{id}/anular(id=${venta.id})}" method="post">
+                            <input type="hidden" name="version" th:value="${venta.version}">
+                            <p>Se repondrán todas las cantidades en esta sede y se dejarán sin efecto los cobros registrados. Se conservarán el documento y su número.</p>
+                            <label>Motivo de anulación<textarea name="motivo" required maxlength="255" rows="2"></textarea></label>
+                            <div class="form-actions"><button class="secondary-button" type="submit">Confirmar anulación</button></div>
+                        </form>
+                    </details>
+                    <p th:if="${venta.tipo.name() == 'COTIZACION'}" class="help">La cotización no reserva existencias ni registra cobros. Al emitirla obtiene su número definitivo y ya no puede editarse.</p>
+                    <section th:if="${venta.estado.name() == 'EMITIDO' and venta.tipo.name() == 'COTIZACION'}">
+                        <p th:if="${ventaVinculada != null}">Ya existe una venta vinculada: <a th:href="@{/ventas/{id}(id=${ventaVinculada.id})}" th:text="${ventaVinculada.codigoDocumento + ' · ' + ventaVinculada.estado}"></a>.</p>
+                        <form class="edit-form" th:if="${ventaVinculada == null}" th:action="@{/ventas/{id}/convertir(id=${venta.id})}" method="post">
+                            <input type="hidden" name="version" th:value="${venta.version}">
+                            <label>Convertir a<select name="tipo"><option value="BOLETA">Boleta</option><option value="FACTURA">Factura</option><option value="NOTA_VENTA">Nota de venta</option></select></label>
+                            <div class="form-actions"><button class="primary-button" type="submit">Convertir a venta</button></div>
+                        </form>
+                    </section>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/ventas}">Volver</a><a class="secondary-button" th:if="${venta.estado.name() == 'BORRADOR'}" th:href="@{/ventas/{id}/editar(id=${venta.id})}">Corregir datos</a>
+                        <form th:if="${venta.estado.name() == 'BORRADOR' and venta.tipo.name() == 'COTIZACION'}" th:action="@{/ventas/{id}/emitir-cotizacion(id=${venta.id})}" method="post">
+                            <input type="hidden" name="version" th:value="${venta.version}">
+                            <button class="primary-button" type="submit" th:disabled="${venta.total.signum() <= 0 or #lists.isEmpty(venta.lineas)}">Emitir cotización</button>
+                        </form>
+                        <a class="secondary-button" th:if="${venta.confirmadoEn != null}" th:href="@{/ventas/{id}/imprimir(id=${venta.id})}">Imprimir / Guardar PDF</a>
+                        <form th:if="${venta.estado.name() == 'ANULADO'}" th:action="@{/ventas/{id}/copiar(id=${venta.id})}" method="post">
+                            <input type="hidden" name="version" th:value="${venta.version}">
+                            <button class="primary-button" type="submit">Copiar datos</button>
+                        </form>
+                        <form th:if="${venta.estado.name() == 'BORRADOR' and venta.tipo.name() != 'COTIZACION'}" th:action="@{/ventas/{id}/confirmar(id=${venta.id})}" method="post">
+                            <input type="hidden" name="version" th:value="${venta.version}">
+                            <button class="primary-button" type="submit" th:disabled="${venta.saldo.signum() > 0 or venta.total.signum() <= 0 or #lists.isEmpty(venta.lineas)}">Confirmar venta</button>
+                        </form>
+                    </div>
+                    <p th:if="${venta.estado.name() == 'BORRADOR' and venta.tipo.name() != 'COTIZACION'}" class="help">Confirmar asigna el número definitivo, registra los pagos y descuenta el stock de esta sede. Después no podrás editar la venta.</p>
+                </div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

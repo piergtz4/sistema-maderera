@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Acceso')}"></head>
+<body><main class="error-page"><section class="dashboard-card edit-form">
+    <h1>Página o registro no encontrado</h1>
+    <p><span th:text="${detalle ?: 'Comprueba la dirección o el registro solicitado.'}"></span></p>
+    <a class="primary-button" th:href="@{/dashboard}">Volver al inicio</a>
+</section></main></body>
+</html>

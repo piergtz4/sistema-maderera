@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Movimientos')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('movimientos')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Movimientos', 'Historial de cambios de stock de tu sede')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><h2>Historial de movimientos de <span th:text="${sedeNombre}">esta sede</span></h2></div>
+                <div class="filters"><label>Buscar<input id="buscador" type="search" placeholder="Producto, usuario o motivo"></label><button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cambio</th><th>Stock final</th><th>Usuario</th><th>Motivo</th></tr></thead>
+                    <tbody id="catalogo">
+                        <tr th:each="m : ${movimientos}" data-row>
+                            <td th:text="${#temporals.format(m.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${m.producto}"></td><td th:text="${m.tipo}"></td><td class="number" th:text="${@formatoCantidad.mostrar(m.cantidad)}"></td>
+                            <td class="number" th:text="${@formatoCantidad.mostrar(m.stockPosterior)}"></td><td th:text="${m.usuario}"></td><td th:text="${m.motivo}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(movimientos)}"><td colspan="7" class="empty">Todavía no hay movimientos en esta sede.</td></tr>
+                        <tr id="sinResultados" hidden><td colspan="7" class="empty">No hay coincidencias con la búsqueda.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/catalogo.js}"></script>
+</body>
+</html>

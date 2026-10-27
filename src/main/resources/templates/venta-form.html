@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Realizar venta')}"></head>
+<body class="venta-page">
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('ventas')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Realizar venta', 'Información del documento')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <p class="notice" th:if="${documentoOrigenId != null}">Copia de <a th:href="@{/ventas/{id}(id=${documentoOrigenId})}" th:text="${codigoOrigen}"></a>. Revisa cliente, productos y pagos antes de confirmar. Si hay abonos copiados, verifica que sigan correspondiendo.</p>
+            <section class="dashboard-card form-card venta-card">
+                <div class="card-header venta-titulo"><h2 th:text="${documento.id == null ? 'Realizar venta' : 'Continuar documento'}"></h2><p class="help">Documento de prueba sin valor tributario.</p></div>
+                <form class="edit-form" th:action="@{/ventas/guardar}" th:object="${documento}" method="post" th:with="numeroActual=${numeracion[documento.tipo != null ? documento.tipo : tiposDocumento[0]]}">
+                    <input type="hidden" th:field="*{id}"><input type="hidden" th:field="*{version}">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
+                        <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                    </div>
+                    <div class="venta-cabecera">
+                        <label>Punto de venta<input th:value="${sedeNombre}" disabled></label>
+                        <label>Tipo de documento<select th:field="*{tipo}" required><option th:each="t : ${tiposDocumento}" th:value="${t}" th:text="${t.nombre}" th:attr="data-serie=${numeracion.get(t).serie},data-numero=${numeracion.get(t).numero}"></option></select></label>
+                        <label>Serie<input id="serieDocumento" th:value="${numeroActual.serie}" disabled></label>
+                        <label>Número<input id="numeroDocumentoVenta" th:value="${numeroActual.numero}" disabled></label>
+                        <p class="help full-width">El número se asigna al confirmar o emitir; puede cambiar si otra persona emite antes.</p>
+                        <div class="full-width"><label for="clienteId">Cliente</label><div class="client-picker">
+                            <select th:field="*{clienteId}"><option value="">Sin cliente identificado</option><option th:each="c : ${clientes}" th:value="${c.id}" th:disabled="${!c.estado}" th:attr="data-nombre=${c.nombre},data-documento=${c.numeroDocumento},data-tipo=${c.tipoIdentificacion},data-direccion=${c.direccion}" th:text="${c.nombre + (c.numeroDocumento == null ? '' : ' · ' + c.numeroDocumento) + (c.estado ? '' : ' (inactivo)')}"></option></select>
+                            <button class="add-client-button" id="abrirCliente" type="button" aria-label="Agregar cliente" title="Agregar cliente" aria-haspopup="dialog">+</button>
+                        </div><p id="clienteAgregado" class="help" role="status" aria-live="polite"></p></div>
+                        <div class="venta-cliente-datos full-width">
+                            <label>DNI / RUC / Otro<input id="clienteDocumento" readonly placeholder="Sin documento"></label>
+                            <label>Nombre completo o razón social<input id="clienteNombre" readonly placeholder="Sin cliente identificado"></label>
+                            <label class="cliente-direccion">Dirección<input id="clienteDireccion" readonly placeholder="Sin dirección registrada"></label>
+                        </div>
+                        <p class="help full-width">Factura: requiere cliente con RUC. Usa + para registrar un cliente.</p>
+                    </div>
+                    <section class="venta-productos" aria-labelledby="tituloProductosVenta">
+                        <div class="card-header"><h3 id="tituloProductosVenta">Productos de la sede</h3><button id="agregarLineaVenta" class="secondary-button" type="button">Agregar producto</button></div>
+                        <p class="help">Cantidad × precio = importe. Puedes ajustar «A cobrar» sin cambiar la cantidad; «Usar cálculo» restaura el importe automático.</p>
+                        <div class="table-container"><table class="tabla-venta">
+                            <thead><tr><th>Producto / stock actual</th><th>Cantidad</th><th>Precio S/</th><th>Calculado S/</th><th>A cobrar S/</th><th>Acción</th></tr></thead>
+                            <tbody id="lineasVenta"><tr th:each="linea, s : *{lineas}" class="venta-linea">
+    <td><select data-field="productoId" aria-label="Producto" required th:field="*{lineas[__${s.index}__].productoId}"><option value="">Selecciona un producto</option><option th:each="p : ${productosVenta}" th:value="${p.id}" th:text="${p.codigo + ' · ' + p.nombre + (p.activo ? '' : ' (inactivo)')}" th:disabled="${!p.activo}" th:attr="data-unidad=${p.unidad},data-stock=${p.stock.toPlainString()},data-minimo=${p.minimo.toPlainString()},data-precio=${p.precio}"></option></select><small class="stock-venta"></small></td>
+    <td><input data-field="cantidad" aria-label="Cantidad" type="number" min="0.0001" max="9999999999.9999" step="0.0001" required th:field="*{lineas[__${s.index}__].cantidad}"></td>
+    <td><input data-field="precio" aria-label="Precio por unidad" type="number" min="0" max="99999999.99" step="0.01" required th:field="*{lineas[__${s.index}__].precio}"></td>
+    <td><output class="calculado-venta">—</output></td>
+    <td><input data-field="importeCobrar" aria-label="Importe a cobrar" type="number" min="0" max="99999999999999.99" step="0.01" th:field="*{lineas[__${s.index}__].importeCobrar}" placeholder="Automático"><small class="ajuste-venta"></small><button class="text-button restaurar-importe" type="button">Usar cálculo</button></td>
+    <td><button class="secondary-button quitar-linea" type="button" aria-label="Quitar producto">Quitar</button></td>
+</tr></tbody>
+                        </table></div>
+                        <template id="plantillaLineaVenta"><tr class="venta-linea">
+    <td><select data-field="productoId" aria-label="Producto" required><option value="">Selecciona un producto</option><option th:each="p : ${productosVenta}" th:value="${p.id}" th:text="${p.codigo + ' · ' + p.nombre + (p.activo ? '' : ' (inactivo)')}" th:disabled="${!p.activo}" th:attr="data-unidad=${p.unidad},data-stock=${p.stock.toPlainString()},data-minimo=${p.minimo.toPlainString()},data-precio=${p.precio}"></option></select><small class="stock-venta"></small></td>
+    <td><input data-field="cantidad" aria-label="Cantidad" type="number" min="0.0001" max="9999999999.9999" step="0.0001" required></td>
+    <td><input data-field="precio" aria-label="Precio por unidad" type="number" min="0" max="99999999.99" step="0.01" required></td>
+    <td><output class="calculado-venta">—</output></td>
+    <td><input data-field="importeCobrar" aria-label="Importe a cobrar" type="number" min="0" max="99999999999999.99" step="0.01" placeholder="Automático"><small class="ajuste-venta"></small><button class="text-button restaurar-importe" type="button">Usar cálculo</button></td>
+    <td><button class="secondary-button quitar-linea" type="button" aria-label="Quitar producto">Quitar</button></td>
+</tr></template>
+                        <p id="sinLineasVenta" class="help">Agrega los productos que llevará el cliente.</p>
+                        <div class="venta-cierre">
+                            <label>Detalles generales<textarea th:field="*{detalles}" maxlength="2000" rows="2" placeholder="Medidas, piezas y aclaraciones del documento"></textarea></label>
+                            <div class="venta-totales" aria-live="polite"><p><span>Subtotal sin IGV</span><span>S/ <output id="subtotalVenta">0.00</output></span></p><p><span>IGV 18%</span><span>S/ <output id="igvVenta">0.00</output></span></p><p class="total-venta"><span>Total a cobrar</span><span>S/ <output id="totalVenta">0.00</output></span></p><small>Precios y ajustes incluyen IGV.</small></div>
+                        </div>
+                    <fieldset id="pagosVenta" class="venta-pagos-integrados">
+                        <legend>Forma de pago</legend>
+                        <label class="pago-exacto"><input type="checkbox" id="efectivoExacto" th:checked="${#lists.isEmpty(documento.pagos)}"> Efectivo exacto al guardar y revisar</label>
+                        <p id="avisoEfectivoExacto" class="help">Se prepara el importe total en efectivo. Guardar datos conserva la venta pendiente sin registrar este pago automático.</p>
+                        <div class="card-header"><p class="help">Una fila por abono. Selecciona la cuenta para transferencias; Yape usa el BCP configurado. Verifica el depósito y su código.</p><button id="agregarPago" class="secondary-button" type="button">Agregar pago</button></div>
+                        <div class="table-container"><table class="tabla-pagos"><thead><tr><th>Medio</th><th>Recibido S/</th><th>Código de operación</th><th>Banco / destino</th><th>Acción</th></tr></thead><tbody id="filasPagos"><tr th:each="pago, ps : *{pagos}" class="pago-linea">
+    <td><select data-pago="medio" aria-label="Medio de pago" th:field="*{pagos[__${ps.index}__].medio}"><option value="EFECTIVO">Efectivo</option><option value="YAPE">Yape</option><option value="TRANSFERENCIA">Transferencia</option></select></td>
+    <td><input data-pago="recibido" aria-label="Monto recibido" type="number" min="0.01" max="9999999999999999.99" step="0.01" required th:field="*{pagos[__${ps.index}__].recibido}"></td>
+    <td><input data-pago="referencia" aria-label="Código de operación" maxlength="100" th:field="*{pagos[__${ps.index}__].referencia}"></td>
+    <td><select data-cuenta aria-label="Cuenta de destino"><option value="">Selecciona una cuenta</option><option th:each="c : ${cuentasPago}" th:value="${c.id}" th:disabled="${!c.activa}" th:attr="data-banco=${c.banco},data-yape=${c.celularYape != null},data-etiqueta=${c.etiqueta}" th:text="${c.etiqueta + (c.activa ? '' : ' (inactiva)')}"></option></select><input type="hidden" data-pago="cuentaDestinoId" th:field="*{pagos[__${ps.index}__].cuentaDestinoId}"><input type="hidden" data-pago="banco" th:field="*{pagos[__${ps.index}__].banco}"></td>
+    <td><button class="secondary-button quitar-pago" type="button">Quitar pago</button></td>
+</tr></tbody></table></div>
+                        <template id="plantillaPago"><tr class="pago-linea">
+    <td><select data-pago="medio" aria-label="Medio de pago"><option value="EFECTIVO">Efectivo</option><option value="YAPE">Yape</option><option value="TRANSFERENCIA">Transferencia</option></select></td>
+    <td><input data-pago="recibido" aria-label="Monto recibido" type="number" min="0.01" max="9999999999999999.99" step="0.01" required></td>
+    <td><input data-pago="referencia" aria-label="Código de operación" maxlength="100"></td>
+    <td><select data-cuenta aria-label="Cuenta de destino"><option value="">Selecciona una cuenta</option><option th:each="c : ${cuentasPago}" th:value="${c.id}" th:disabled="${!c.activa}" th:attr="data-banco=${c.banco},data-yape=${c.celularYape != null},data-etiqueta=${c.etiqueta}" th:text="${c.etiqueta + (c.activa ? '' : ' (inactiva)')}"></option></select><input type="hidden" data-pago="cuentaDestinoId"><input type="hidden" data-pago="banco"></td>
+    <td><button class="secondary-button quitar-pago" type="button">Quitar pago</button></td>
+</tr></template>
+                        <p id="errorPagos" class="notice error" hidden role="alert"></p>
+                        <div class="pago-resumen" aria-live="polite"><div><span>Recibido / previsto</span><strong>S/ <output id="recibidoVenta">0.00</output></strong></div><div class="pago-saldo"><span>Saldo pendiente</span><strong>S/ <output id="saldoVenta">0.00</output></strong></div><div><span>Vuelto en efectivo</span><strong>S/ <output id="vueltoVenta">0.00</output></strong></div></div>
+                        <p id="estadoPagos" class="help" role="status"></p>
+                        <p class="help">El vuelto corresponde únicamente al efectivo. Un exceso digital debe revisarse antes de confirmar.</p>
+                    </fieldset>
+                    <p id="avisoCotizacion" class="help" hidden>Las cotizaciones se guardan sin pagos ni movimiento de stock.</p>
+                    </section>
+                    <p class="help">Guardar mantiene el documento pendiente. El stock y los cobros se aplican al confirmar después de revisar.</p>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/ventas}">Volver</a><button class="secondary-button" type="submit" name="accion" value="guardar" formnovalidate>Guardar datos</button><button id="revisarVenta" class="primary-button" type="submit" name="accion" value="revisar" aria-describedby="estadoPagos">Guardar y revisar</button></div>
+                </form>
+                <div class="edit-form" th:if="${documento.id != null}">
+                    <details th:replace="~{fragments/descartar-venta :: confirmacion(${documento.id}, ${documento.version})}"></details>
+                </div>
+            </section>
+            <dialog id="modalCliente" class="client-dialog" aria-labelledby="tituloModalCliente">
+                <div class="card-header"><h2 id="tituloModalCliente">Agregar cliente</h2><button class="secondary-button" id="cerrarCliente" type="button" aria-label="Cerrar ventana">Cerrar</button></div>
+                <form id="formClienteRapido" class="edit-form" th:action="@{/clientes/crear-desde-venta}" method="post">
+                    <p id="errorCliente" class="notice error" role="alert" hidden></p>
+                    <div class="form-grid">
+                        <label>Tipo de documento<select name="tipoIdentificacion" required><option value="DNI">DNI</option><option value="RUC">RUC</option><option value="OTRO">Otro documento</option><option value="SIN_DOCUMENTO">Sin documento</option></select></label>
+                        <label>Número de documento<input name="numeroDocumento" maxlength="20"></label>
+                        <label class="full-width">Nombre completo o razón social<input name="nombre" required maxlength="150"></label>
+                        <label>Teléfono<input name="telefono" type="tel" maxlength="30"></label>
+                        <label>Correo electrónico<input name="email" type="email" maxlength="150"></label>
+                        <label class="full-width">Dirección<textarea name="direccion" maxlength="255" rows="2"></textarea></label>
+                    </div>
+                    <div class="form-actions"><button class="secondary-button" id="cancelarCliente" type="button">Cancelar</button><button class="primary-button" id="guardarClienteRapido" type="submit">Guardar y seleccionar</button></div>
+                </form>
+            </dialog>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/venta-form.js}"></script>
+<script th:src="@{/js/venta-pagos.js}"></script>
+<script th:src="@{/js/venta-productos.js}"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Detalle de compra')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('compras')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Detalle de compra', 'Revisión del documento y del ingreso de mercadería')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><h2 th:text="${compra.codigo}"></h2><span class="badge" th:text="${compra.estado}"></span></div>
+                <div class="edit-form">
+                    <div class="form-grid">
+                        <div><strong>Proveedor</strong><p th:text="${compra.proveedorNombre}"></p><p th:text="${compra.proveedorDocumento}"></p></div>
+                        <div><strong>Sede receptora</strong><p th:text="${compra.sede.nombre}"></p></div>
+                        <div><strong>Comprobante del proveedor</strong><p th:text="${compra.tipo + ' ' + compra.referencia}"></p></div>
+                        <div><strong>Fecha del comprobante</strong><p th:text="${#temporals.format(compra.fecha, 'dd/MM/yyyy')}"></p></div>
+                    </div>
+                    <div class="table-container"><table><thead><tr><th>Producto</th><th>Unidad</th><th>Cantidad</th><th>Precio de compra S/</th><th>Importe S/</th></tr></thead><tbody>
+                        <tr th:each="l : ${compra.lineas}"><td th:text="${l.codigo + ' · ' + l.nombre}"></td><td th:text="${l.unidadMedida}"></td><td th:text="${l.cantidad.stripTrailingZeros().toPlainString()}"></td><td th:text="${l.precio}"></td><td th:text="${l.importe}"></td></tr>
+                    </tbody></table></div>
+                    <p class="total-venta">Total de compra: S/ <strong th:text="${compra.total}"></strong></p>
+                    <div th:if="${!#strings.isEmpty(compra.detalles)}"><strong>Detalles generales</strong><p class="detalle-texto" th:text="${compra.detalles}"></p></div>
+                    <p th:text="${'Registrado por: ' + compra.usuario.nombre}"></p>
+                    <p class="notice success" th:if="${compra.confirmadoEn != null}" th:text="${'Ingreso confirmado el ' + #temporals.format(compra.confirmadoEn, 'dd/MM/yyyy HH:mm') + ' por ' + compra.confirmadoPor.nombre}"></p>
+                    <p th:if="${compra.estado.name() == 'PENDIENTE'}" class="help">Confirma únicamente cuando la mercadería haya sido recibida. Todas las cantidades ingresarán a esta sede; después no podrás editar ni eliminar la compra.</p>
+                    <div class="form-actions">
+                        <a class="secondary-button" th:href="@{/compras}">Volver</a>
+                        <a class="secondary-button" th:if="${compra.estado.name() == 'PENDIENTE'}" th:href="@{/compras/{id}/editar(id=${compra.id})}">Corregir datos</a>
+                        <a class="secondary-button" th:if="${compra.estado.name() == 'CONFIRMADA'}" th:href="@{/movimientos}">Ver movimientos</a>
+                        <form th:if="${compra.estado.name() == 'PENDIENTE'}" th:action="@{/compras/{id}/confirmar(id=${compra.id})}" method="post"><input type="hidden" name="version" th:value="${compra.version}"><button class="primary-button" type="submit" th:disabled="${compra.total.signum() <= 0}">Confirmar ingreso de mercadería</button></form>
+                    </div>
+                    <div th:if="${compra.estado.name() == 'PENDIENTE'}"><details th:replace="~{fragments/descartar-compra :: confirmacion(${compra.id}, ${compra.version})}"></details></div>
+                </div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

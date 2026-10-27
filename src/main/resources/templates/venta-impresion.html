@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${venta.tipo.nombre + ' ' + venta.codigoDocumento}">Documento de venta</title>
+    <link rel="stylesheet" th:href="@{/css/venta-impresion.css}">
+    <script defer th:src="@{/js/venta-impresion.js}"></script>
+</head>
+<body>
+<nav class="herramientas" aria-label="Acciones del documento">
+    <a th:href="@{/ventas/{id}(id=${venta.id})}">Volver a la venta</a>
+    <button type="button" id="imprimir">Imprimir / Guardar PDF</button>
+    <p>Formato A4. Puedes elegir «Guardar como PDF» en la ventana de impresión.</p>
+</nav>
+<main class="documento">
+    <header class="cabecera">
+        <div>
+            <h1 th:text="${emisor.nombreComercial}"></h1>
+            <p th:if="${!#strings.isEmpty(emisor.razonSocial)}" th:text="${emisor.razonSocial}"></p>
+            <p th:if="${!#strings.isEmpty(emisor.ruc)}" th:text="${'RUC: ' + emisor.ruc}"></p>
+            <p><strong>Sede: </strong><span th:text="${local.nombre}"></span></p>
+            <p th:text="${local.direccion}"></p>
+            <p th:text="${local.distrito + ' · ' + local.provincia + ' · ' + local.departamento}"></p>
+            <p th:if="${!#strings.isEmpty(emisor.telefono)}" th:text="${'Teléfono: ' + emisor.telefono}"></p>
+            <p th:if="${!#strings.isEmpty(emisor.email)}" th:text="${emisor.email}"></p>
+        </div>
+        <div class="identificador">
+            <h2 th:text="${venta.tipo.nombre}"></h2>
+            <strong th:text="${venta.codigoDocumento}"></strong>
+            <p>Documento de prueba<br>Sin valor tributario</p>
+            <b th:if="${venta.estado.name() == 'ANULADO'}">ANULADO</b>
+        </div>
+    </header>
+    <section class="anulado" th:if="${venta.estado.name() == 'ANULADO'}">
+        <h2>DOCUMENTO ANULADO</h2>
+        <p>Sin cobros vigentes. Los importes siguientes son históricos.</p>
+        <p th:text="${#temporals.format(venta.anuladoEn, 'dd/MM/yyyy HH:mm') + ' · ' + venta.motivoAnulacion}"></p>
+    </section>
+    <section class="cliente">
+        <p><strong>Fecha: </strong><span th:text="${#temporals.format(venta.confirmadoEn, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <p><strong>Cliente: </strong><span th:text="${venta.clienteNombre}"></span></p>
+        <p th:if="${!#strings.isEmpty(venta.clienteDocumento)}"><strong>Documento: </strong><span th:text="${venta.clienteDocumento}"></span></p>
+        <p th:if="${!#strings.isEmpty(venta.clienteDireccion)}"><strong>Dirección: </strong><span th:text="${venta.clienteDireccion}"></span></p>
+        <p><strong>Atendido por: </strong><span th:text="${venta.confirmadoPor.nombre}"></span><span th:text="${venta.tipo.name() == 'COTIZACION' ? ' · Soles · Cotización sin cobros ni reserva de stock' : ' · Al contado · Soles'}"></span></p>
+    </section>
+    <table class="productos">
+        <thead><tr><th>Producto</th><th>Unidad</th><th class="numero">Cantidad</th><th class="numero">Precio S/</th><th class="numero">Ajuste S/</th><th class="numero">Importe S/</th></tr></thead>
+        <tbody><tr th:each="l : ${venta.lineas}">
+            <td><span th:text="${l.nombre}"></span><small th:text="${l.codigo}"></small></td>
+            <td th:text="${l.unidadMedida}"></td>
+            <td class="numero" th:text="${l.cantidad.stripTrailingZeros().toPlainString()}"></td>
+            <td class="numero" th:text="${l.precio.setScale(2)}"></td>
+            <td class="numero" th:text="${l.ajuste.setScale(2)}"></td>
+            <td class="numero" th:text="${l.importeCobrar.setScale(2)}"></td>
+        </tr></tbody>
+    </table>
+    <section class="totales">
+        <p>Subtotal sin IGV <strong th:text="${'S/ ' + venta.subtotal.setScale(2)}"></strong></p>
+        <p><span th:text="${'IGV ' + venta.tasaIgv.stripTrailingZeros().toPlainString() + '%'}"></span><strong th:text="${'S/ ' + venta.igv.setScale(2)}"></strong></p>
+        <p class="total">Total <strong th:text="${'S/ ' + venta.total.setScale(2)}"></strong></p>
+    </section>
+    <section th:if="${venta.tipo.name() != 'COTIZACION'}">
+        <h2 th:text="${venta.estado.name() == 'ANULADO' ? 'Pagos originales · Revertidos' : 'Pagos'}"></h2>
+        <table class="pagos"><thead><tr><th>Medio</th><th>Operación / Banco</th><th class="numero">Recibido S/</th><th class="numero">Aplicado S/</th></tr></thead>
+            <tbody><tr th:each="p : ${venta.pagos}"><td th:text="${p.medio}"></td><td><span th:text="${p.referencia ?: '—'}"></span><small th:text="${p.banco}"></small></td><td class="numero" th:text="${p.recibido.setScale(2)}"></td><td class="numero" th:text="${p.aplicado.setScale(2)}"></td></tr></tbody>
+        </table>
+        <p class="resumen">Recibido: S/ <span th:text="${venta.recibido.setScale(2)}"></span> · Vuelto en efectivo: S/ <span th:text="${venta.vuelto.setScale(2)}"></span></p>
+        <p th:if="${venta.estado.name() == 'ANULADO'}"><strong>Cobro vigente: S/ 0.00</strong></p>
+    </section>
+    <section th:if="${!#strings.isEmpty(venta.detalles)}">
+        <h2>Detalles generales</h2>
+        <p class="detalles" th:text="${venta.detalles}"></p>
+    </section>
+    <footer>Documento de prueba sin valor tributario · MADERPRO</footer>
+</main>
+</body>
+</html>

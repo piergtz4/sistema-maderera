@@ -1,0 +1,55 @@
+CREATE TABLE proveedores (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    empresa_id BIGINT NOT NULL,
+    tipo_identificacion VARCHAR(20) NOT NULL,
+    numero_documento VARCHAR(20),
+    nombre VARCHAR(150) NOT NULL,
+    direccion VARCHAR(255),
+    telefono VARCHAR(30),
+    email VARCHAR(150),
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT fk_proveedor_empresa FOREIGN KEY (empresa_id) REFERENCES empresas(id),
+    CONSTRAINT uk_proveedor_documento UNIQUE (empresa_id, tipo_identificacion, numero_documento)
+);
+CREATE TABLE compras (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    version BIGINT NOT NULL DEFAULT 0,
+    sede_id BIGINT NOT NULL,
+    proveedor_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    estado VARCHAR(20) NOT NULL,
+    tipo VARCHAR(20) NOT NULL,
+    referencia VARCHAR(60) NOT NULL,
+    fecha DATE NOT NULL,
+    actualizado DATETIME(6) NOT NULL,
+    confirmado_en DATETIME(6),
+    confirmado_por_id BIGINT,
+    proveedor_nombre VARCHAR(150) NOT NULL,
+    proveedor_documento VARCHAR(50),
+    detalles VARCHAR(2000),
+    total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    CONSTRAINT fk_compra_sede FOREIGN KEY (sede_id) REFERENCES sedes(id),
+    CONSTRAINT fk_compra_proveedor FOREIGN KEY (proveedor_id) REFERENCES proveedores(id),
+    CONSTRAINT fk_compra_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    CONSTRAINT fk_compra_confirmador FOREIGN KEY (confirmado_por_id) REFERENCES usuarios(id),
+    CONSTRAINT uk_compra_comprobante UNIQUE (proveedor_id, tipo, referencia),
+    CONSTRAINT ck_compra_total CHECK (total >= 0)
+);
+CREATE INDEX idx_compra_sede_fecha ON compras (sede_id, fecha);
+CREATE TABLE detalles_compra (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    compra_id BIGINT NOT NULL,
+    producto_id BIGINT NOT NULL,
+    codigo VARCHAR(30) NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    unidad_medida VARCHAR(10) NOT NULL,
+    cantidad DECIMAL(12,4) NOT NULL,
+    precio DECIMAL(10,2) NOT NULL,
+    importe DECIMAL(18,2) NOT NULL,
+    CONSTRAINT fk_detalle_compra FOREIGN KEY (compra_id) REFERENCES compras(id),
+    CONSTRAINT fk_compra_producto FOREIGN KEY (producto_id) REFERENCES productos(id),
+    CONSTRAINT ck_compra_cantidad CHECK (cantidad > 0),
+    CONSTRAINT ck_compra_importes CHECK (precio >= 0 AND importe >= 0),
+    CONSTRAINT uk_compra_producto UNIQUE (compra_id, producto_id)
+);

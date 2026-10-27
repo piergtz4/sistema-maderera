@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Sedes')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('sedes')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Sedes', 'Administra los locales de la empresa')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><div><h2>Locales registrados</h2><p>Al desactivar una sede, sus usuarios también quedan inactivos. Al reabrirla, reactiva solo las cuentas necesarias desde Usuarios.</p></div>
+                    <a class="primary-button" th:href="@{/sedes/nueva}">Nueva sede</a>
+                </div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Nombre</th><th>Ubicación</th><th>Series de documentos</th><th>Dirección</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody>
+                        <tr th:each="s : ${sedes}">
+                            <td th:text="${s.nombre}"></td>
+                            <td th:text="${s.distrito + ', ' + s.provincia + ', ' + s.departamento}"></td>
+                            <td><span class="code" th:text="${s.serieBoleta + ' · ' + s.serieFactura}"></span><small th:text="${s.serieNotaVenta + ' · ' + s.serieCotizacion}"></small></td>
+                            <td th:text="${s.direccion != null ? s.direccion : '—'}"></td>
+                            <td th:text="${s.telefono != null ? s.telefono : '—'}"></td>
+                            <td><span class="badge" th:classappend="${s.estado ? '' : ' inactive'}" th:text="${s.estado ? 'Activa' : 'Inactiva'}"></span></td>
+                            <td><div class="actions">
+                                <a class="secondary-button" th:href="@{/sedes/{id}/editar(id=${s.id})}">Editar</a>
+                                <form th:action="@{/sedes/{id}/estado(id=${s.id})}" method="post">
+                                    <button class="secondary-button" type="submit" th:text="${s.estado ? 'Desactivar' : 'Activar'}"></button>
+                                </form>
+                            </div></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(sedes)}"><td colspan="7" class="empty">Todavía no hay sedes. Registra la primera para comenzar.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<details th:fragment="confirmacion(id, version)" class="anulacion-venta">
+    <summary>Descartar pendiente</summary>
+    <form class="edit-form" th:action="@{/ventas/{id}/descartar(id=${id})}" method="post">
+        <input type="hidden" name="version" th:value="${version}">
+        <p>Se eliminará este documento pendiente y sus productos y pagos preparados. Esta acción no se puede deshacer. No afecta al stock, los correlativos ni al documento original si se trata de una copia.</p>
+        <div class="form-actions"><button class="secondary-button" type="submit">Sí, eliminar pendiente</button></div>
+    </form>
+</details>
+</body>
+</html>

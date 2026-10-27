@@ -1,0 +1,10 @@
+/target/
+/backups/
+/config/application-local.properties
+/.vscode/
+/.idea/
+*.iml
+.classpath
+.project
+.settings/
+.mvn/wrapper/maven-wrapper.jar

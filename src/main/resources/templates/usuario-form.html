@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Usuario')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('usuarios')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Datos del usuario', 'Define su cuenta, rol y sede')}"></header>
+        <section class="dashboard-content">
+            <section class="dashboard-card form-card">
+                <div class="card-header"><div><h2 th:text="${cuenta.id == null ? 'Nuevo usuario' : 'Editar usuario'}"></h2><p>El administrador general trabaja en una sede que elige al ingresar.</p></div></div>
+                <form class="edit-form" th:action="@{/usuarios/guardar}" th:object="${cuenta}" method="post">
+                    <input type="hidden" th:field="*{id}">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
+                        <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                    </div>
+                    <div class="form-grid">
+                        <label>Nombre completo<input th:field="*{nombre}" required maxlength="100" autocomplete="name"></label>
+                        <label>Usuario de ingreso<input th:field="*{usuario}" required maxlength="50" autocomplete="off" placeholder="Ejemplo: maria.ica"></label>
+                        <label>Rol<select id="rol" th:field="*{rol}" required>
+                            <option value="">Selecciona un rol</option>
+                            <option value="ADMINISTRADOR_GENERAL">Administrador general</option>
+                            <option value="ADMINISTRADOR">Administrador de sede</option>
+                            <option value="CONSULTA">Consulta de sede</option>
+                        </select></label>
+                        <label>Sede<select id="sedeId" th:field="*{sedeId}" th:disabled="${cuenta.rol == 'ADMINISTRADOR_GENERAL'}" th:required="${cuenta.rol != 'ADMINISTRADOR_GENERAL'}">
+                            <option value="" th:text="${cuenta.rol == 'ADMINISTRADOR_GENERAL' ? 'Todas' : 'Selecciona una sede'}">Selecciona una sede</option>
+                            <option th:each="s : ${sedes}" th:value="${s.id}" th:text="${s.nombre}"></option>
+                        </select></label>
+                        <label th:if="${cuenta.id == null or cuenta.id != usuarioId}"><span th:text="${cuenta.id == null ? 'Contraseña inicial' : 'Restablecer contraseña'}">Contraseña</span><input name="password" type="password" minlength="12" maxlength="72" autocomplete="new-password" th:required="${cuenta.id == null}"><span class="help">Mínimo 12 caracteres, con letras y números.<span th:if="${cuenta.id != null}"> Deja vacío para conservar la actual.</span></span></label>
+                        <label th:if="${cuenta.id == null or cuenta.id != usuarioId}">Confirmar contraseña<input name="confirmarPassword" type="password" autocomplete="new-password" th:required="${cuenta.id == null}"></label>
+                        <label th:if="${cuenta.id != null and cuenta.id != usuarioId}">Tu contraseña de administrador<input id="claveAdministrador" name="claveAdministrador" type="password" autocomplete="current-password"><span class="help">Solo se necesita para restablecer la contraseña de este usuario. Su contraseña actual no se puede ver.</span></label>
+                        <p class="help full-width" th:if="${cuenta.id != null and cuenta.id == usuarioId}">Para cambiar tu contraseña, ve a <a th:href="@{/mi-cuenta}">Mi cuenta</a>. Allí se solicita la contraseña actual.</p>
+                    </div>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/usuarios}">Cancelar</a><button class="primary-button" type="submit">Guardar usuario</button></div>
+                </form>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/usuarios.js}"></script>
+</body>
+</html>

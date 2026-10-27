@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body class="dashboard-page">
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('dashboard')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Dashboard', 'Resumen del negocio')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card sales-card">
+                <div class="card-header"><h2>Ventas de la sede</h2><div class="dashboard-card-actions"><button class="dashboard-link" type="button" data-dialog-open="detalleGrafico">Ver datos</button><a th:if="${esAdministrador}" class="primary-button" th:href="@{/ventas/nuevo}">Realizar venta</a></div></div>
+                <form class="filters dashboard-filters" th:action="@{/dashboard}" method="get">
+                    <label>Período<select name="periodo" id="periodoDashboard"><option th:each="op : ${ {'hoy','semana','mes','anio','personalizado'} }" th:value="${op}" th:selected="${periodo.filtro == op}" th:text="${op == 'hoy' ? 'Hoy' : (op == 'semana' ? 'Esta semana' : (op == 'mes' ? 'Este mes' : (op == 'anio' ? 'Este año' : 'Personalizado')))}"></option></select></label>
+                    <label>Desde<input id="desdeDashboard" name="desde" type="date" th:value="${periodo.desde}"></label>
+                    <label>Hasta<input id="hastaDashboard" name="hasta" type="date" th:value="${periodo.hasta}"></label>
+                    <button class="primary-button">Aplicar</button><a class="secondary-button" th:href="@{/dashboard}">Limpiar filtros</a>
+                </form>
+                <div class="sales-chart-wrap">
+                    <div id="graficoVentas" class="sales-chart" role="img" aria-label="Evolución de las ventas del período. Consulta los valores en Ver datos."></div>
+                    <p class="chart-empty" th:if="${indicadores.cantidad == 0}">No hay ventas confirmadas en este período.</p>
+
+                </div>
+                <div class="sales-kpis"><article><span>Ventas confirmadas</span><strong th:text="${indicadores.cantidad}"></strong></article><article><span title="Importe de ventas confirmadas con IGV, sin vuelto">Total vendido</span><strong th:text="${'S/ ' + #numbers.formatDecimal(indicadores.total,1,'COMMA',2,'POINT')}"></strong></article></div>
+            </section>
+            <section class="payment-summary" aria-labelledby="tituloCobros">
+                <h2 id="tituloCobros">Cobros por medio de pago</h2>
+                <div class="payment-grid">
+                    <article class="payment-card" th:each="c : ${indicadores.cobros}" th:classappend="${'payment-' + c.tema}">
+                        <h3 class="payment-name">
+                            <svg th:if="${c.tema == 'efectivo'}" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M5 9h1m12 6h1"/></svg>
+                            <svg th:if="${c.tema == 'yape'}" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4m-4-7 2 2 4-4"/></svg>
+                            <svg th:if="${c.tipo == 'Transferencias'}" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m3 8 9-5 9 5v2H3zm2 4v6m5-6v6m4-6v6m5-6v6M2 21h20"/></svg>
+                            <span th:text="${c.nombre}"></span>
+                        </h3>
+                        <strong class="payment-amount" th:text="${'S/ ' + #numbers.formatDecimal(c.monto,1,'COMMA',2,'POINT')}"></strong>
+                        <p class="payment-meta"><span th:if="${!#strings.isEmpty(c.tipo)}" th:text="${c.tipo + ' · '}"></span><span th:text="${c.pagos + (c.pagos == 1 ? ' pago' : ' pagos')}"></span></p>
+                    </article>
+                </div>
+            </section>
+            <div class="dashboard-bottom">
+                <section class="dashboard-card ranking-card" aria-labelledby="tituloRanking">
+                    <div class="card-header"><h2 id="tituloRanking">Productos más vendidos</h2><span class="dashboard-chip" title="Ordenados por importe vendido">Top 5 por importe</span></div>
+                    <div class="table-container ranking-scroll"><table class="ranking-table"><thead><tr><th>Producto</th><th>Cantidad</th><th>Vendido S/</th></tr></thead><tbody>
+                        <tr th:each="p : ${indicadores.mejores}"><td><strong th:text="${p.nombre}"></strong><small th:text="${p.codigo}"></small></td><td class="number"><span th:text="${@formatoCantidad.mostrar(p.cantidad)}"></span> <span class="ranking-unit" th:text="${p.unidad}"></span></td><td class="number" th:text="${#numbers.formatDecimal(p.importe,1,'COMMA',2,'POINT')}"></td></tr>
+                        <tr th:if="${#lists.isEmpty(indicadores.mejores)}"><td colspan="3" class="empty">No hay productos vendidos en este período.</td></tr>
+                    </tbody></table></div>
+                </section>
+                <section class="dashboard-card inventory-card" aria-labelledby="tituloInventario">
+                    <div class="card-header"><h2 id="tituloInventario">Inventario actual</h2><a class="dashboard-link" th:href="@{/inventario}">Ver inventario <span aria-hidden="true">↗</span></a></div>
+                    <div class="inventory-counts"><div><strong th:text="${indicadores.productosSede}"></strong><span title="Incluye productos activos e inactivos">Productos de la sede</span></div><div><strong th:text="${indicadores.productosEmpresa}"></strong><span title="Incluye productos activos e inactivos">Catálogo de la empresa</span></div></div>
+                    <div class="stock-kpis"><button type="button" data-dialog-open="alertasStock" class="stock-card stock-red"><strong th:text="${indicadores.sinStock}"></strong><span>Sin stock</span></button><button type="button" data-dialog-open="alertasStock" class="stock-card stock-yellow" title="Productos activos con stock positivo menor o igual al mínimo"><strong th:text="${indicadores.stockBajo}"></strong><span>Stock bajo</span></button><a th:href="@{/inventario}" class="stock-card stock-green"><strong th:text="${indicadores.disponibles}"></strong><span>Disponibles</span></a></div>
+                    <div class="dashboard-card-footer"><button class="dashboard-link" type="button" data-dialog-open="alertasStock">Ver alertas de stock <span class="dashboard-count" th:text="${indicadores.sinStock + indicadores.stockBajo}"></span></button><button class="dashboard-link" type="button" data-dialog-open="ultimosMovimientos">Últimos movimientos <span aria-hidden="true">↗</span></button></div>
+                </section>
+            </div>
+            <dialog id="detalleGrafico" class="dashboard-dialog" aria-labelledby="tituloDatosGrafico">
+                <div class="dashboard-dialog-header"><h2 id="tituloDatosGrafico">Datos de ventas</h2><button type="button" class="dashboard-dialog-close" data-dialog-close aria-label="Cerrar datos de ventas">×</button></div>
+                <div class="table-container dashboard-dialog-body"><table><thead><tr><th>Fecha / hora</th><th class="number">Vendido S/</th></tr></thead><tbody id="datosGrafico"><tr th:each="p : ${indicadores.puntos}"><td th:text="${p.etiqueta}"></td><td class="number" th:attr="data-monto=${p.monto}" th:text="${#numbers.formatDecimal(p.monto,1,'COMMA',2,'POINT')}"></td></tr></tbody></table></div>
+            </dialog>
+            <dialog id="alertasStock" class="dashboard-dialog" aria-labelledby="tituloAlertasStock">
+                <div class="dashboard-dialog-header"><h2 id="tituloAlertasStock">Alertas de stock</h2><button type="button" class="dashboard-dialog-close" data-dialog-close aria-label="Cerrar alertas de stock">×</button></div>
+                <div class="table-container dashboard-dialog-body"><table><thead><tr><th>Producto</th><th class="number">Stock</th><th>Situación</th></tr></thead><tbody>
+                    <tr th:each="a : ${indicadores.alertas}"><td th:text="${a.nombre}"></td><td class="number"><span th:text="${@formatoCantidad.mostrar(a.stock)}"></span> <span th:text="${a.unidad}"></span></td><td><span class="stock-label" th:classappend="${a.stock.signum() == 0 ? 'stock-red' : 'stock-yellow'}" th:text="${a.situacion}"></span></td></tr>
+                    <tr th:if="${#lists.isEmpty(indicadores.alertas)}"><td colspan="3" class="empty">No hay alertas de stock.</td></tr>
+                </tbody></table></div>
+            </dialog>
+            <dialog id="ultimosMovimientos" class="dashboard-dialog dashboard-dialog-wide" aria-labelledby="tituloMovimientos">
+                <div class="dashboard-dialog-header"><h2 id="tituloMovimientos">Últimos movimientos</h2><button type="button" class="dashboard-dialog-close" data-dialog-close aria-label="Cerrar últimos movimientos">×</button></div>
+                <div class="table-container dashboard-dialog-body" th:with="movimientos=${resumen.movimientos}"><table>
+                    <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="number">Cambio</th><th class="number">Stock final</th><th>Usuario</th><th>Motivo</th></tr></thead>
+                    <tbody>
+                        <tr th:each="m : ${movimientos}">
+                            <td class="movement-date" th:text="${#temporals.format(m.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${m.producto}"></td><td><span class="movement-type" th:text="${m.tipo}"></span></td><td class="number" th:text="${@formatoCantidad.mostrar(m.cantidad)}"></td>
+                            <td class="number" th:text="${@formatoCantidad.mostrar(m.stockPosterior)}"></td><td th:text="${m.usuario}"></td><td th:text="${m.motivo}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(movimientos)}"><td colspan="7" class="empty">Todavía no hay movimientos en esta sede.</td></tr>
+                    </tbody>
+                </table></div>
+            </dialog>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

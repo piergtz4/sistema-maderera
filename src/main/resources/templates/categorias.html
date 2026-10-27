@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Categorías')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('categorias')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Categorías', 'Organiza el catálogo común de la empresa')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><div><h2>Categorías registradas</h2><p><span th:text="${#lists.size(categorias)}">0</span> categorías</p></div>
+                    <a class="primary-button" th:if="${puedeEditarCatalogo}" th:href="@{/categorias/nueva}">Nueva categoría</a>
+                </div>
+                <div class="filters">
+                    <label>Buscar<input id="buscador" type="search" placeholder="Código, nombre o categoría"></label>
+                    <label>Estado<select id="filtroEstado"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></label>
+                <button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Código</th><th>Nombre</th><th>Descripción</th><th>Estado</th><th th:if="${puedeEditarCatalogo}">Acciones</th></tr></thead>
+                    <tbody id="catalogo">
+                        <tr th:each="c : ${categorias}" data-row th:attr="data-estado=${c.estado}">
+                            <td><span class="code" th:text="${c.codigo}"></span></td><td th:text="${c.nombre}"></td>
+                            <td th:text="${c.descripcion}"></td><td><span class="badge" th:classappend="${c.estado ? '' : ' inactive'}" th:text="${c.estado ? 'Activa' : 'Inactiva'}"></span></td>
+                            <td th:if="${puedeEditarCatalogo}"><div class="actions">
+                                <a class="secondary-button" th:href="@{/categorias/editar/{id}(id=${c.id})}">Editar</a>
+                                <form th:action="@{/categorias/cambiar-estado/{id}(id=${c.id})}" method="post">
+                                    <button class="secondary-button" type="submit" th:text="${c.estado ? 'Desactivar' : 'Activar'}"></button>
+                                </form>
+                            </div></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(categorias)}"><td colspan="5" class="empty">Todavía no hay categorías. Registra la primera para crear productos.</td></tr>
+                        <tr id="sinResultados" hidden><td colspan="5" class="empty">No hay coincidencias con los filtros.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/catalogo.js}"></script>
+</body>
+</html>

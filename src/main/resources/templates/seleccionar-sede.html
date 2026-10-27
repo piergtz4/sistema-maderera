@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Seleccionar sede')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Sede de trabajo', 'Elige el local que deseas consultar u operar')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card form-card">
+                <div class="card-header"><div><h2>Sedes activas de <span th:text="${empresaNombre}"></span></h2><p>Los datos y movimientos se mantendrán separados por local.</p></div></div>
+                <form class="edit-form" th:action="@{/sede-trabajo}" method="post" th:if="${!#lists.isEmpty(sedes)}">
+                    <label>Sede<select name="sedeId" required>
+                        <option value="">Selecciona una sede</option>
+                        <option th:each="s : ${sedes}" th:value="${s.id}" th:text="${s.nombre + ' · ' + s.distrito}"></option>
+                    </select></label>
+                    <div class="form-actions"><button class="primary-button" type="submit">Trabajar en esta sede</button></div>
+                </form>
+                <p class="empty" th:if="${#lists.isEmpty(sedes)}">La empresa no tiene sedes activas. <a th:href="@{/sedes/nueva}">Registra la primera sede</a>.</p>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

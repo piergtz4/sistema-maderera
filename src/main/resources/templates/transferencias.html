@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Transferencias')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('transferencias')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Transferencias', 'Traslada existencias entre sedes de la empresa')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><div><h2>Transferir desde <span th:text="${sedeNombre}">esta sede</span></h2><p>El stock sale de esta sede y entra a la sede elegida en una sola operación.</p></div></div>
+                <form class="edit-form" th:action="@{/transferencias}" th:object="${transferencia}" method="post" th:if="${!#lists.isEmpty(existencias) and !#lists.isEmpty(destinos)}">
+                    <div class="form-grid">
+                        <label>Producto de origen<select th:field="*{inventarioOrigenId}" required><option value="">Selecciona un producto</option><option th:each="i : ${existencias}" th:value="${i.id}" th:text="${i.codigo + ' · ' + i.nombre + ' · Disponible: ' + @formatoCantidad.mostrar(i.stock)}"></option></select></label>
+                        <label>Sede de destino<select th:field="*{sedeDestinoId}" required><option value="">Selecciona una sede</option><option th:each="s : ${destinos}" th:value="${s.id}" th:text="${s.nombre}"></option></select></label>
+                        <label>Cantidad<input th:field="*{cantidad}" type="number" min="0.0001" max="99999999.9999" step="0.0001" required></label>
+                        <label>Motivo<input th:field="*{motivo}" maxlength="220" required placeholder="Ejemplo: reposición entre sedes"></label>
+                    </div>
+                    <p class="help">Para productos en UND usa cantidades enteras. Si el destino aún no tiene el producto, se crea su inventario con mínimo 0; podrás editar ese mínimo desde Productos en la sede de destino.</p>
+                    <div class="form-actions"><button class="primary-button" type="submit">Registrar transferencia</button></div>
+                </form>
+                <p class="empty" th:if="${#lists.isEmpty(existencias)}">Esta sede no tiene productos activos con stock disponible para transferir.</p>
+                <p class="empty" th:if="${#lists.isEmpty(destinos)}">Se necesita otra sede activa para transferir.</p>
+            </section>
+            <section class="dashboard-card">
+                <div class="card-header"><h2>Transferencias de <span th:text="${sedeNombre}">esta sede</span></h2></div>
+                <div class="filters"><label>Buscar<input id="buscador" type="search" placeholder="Producto, sede o motivo"></label><button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Fecha</th><th>Producto</th><th>Origen</th><th>Destino</th><th>Cantidad</th><th>Usuario</th><th>Motivo</th></tr></thead>
+                    <tbody id="catalogo">
+                        <tr th:each="t : ${transferencias}" data-row>
+                            <td th:text="${#temporals.format(t.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${t.producto}"></td><td th:text="${t.origen}"></td><td th:text="${t.destino}"></td>
+                            <td class="number" th:text="${@formatoCantidad.mostrar(t.cantidad)}"></td><td th:text="${t.usuario}"></td><td th:text="${t.motivo}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(transferencias)}"><td colspan="7" class="empty">Todavía no hay transferencias de esta sede.</td></tr>
+                        <tr id="sinResultados" hidden><td colspan="7" class="empty">No hay coincidencias con la búsqueda.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/catalogo.js}"></script>
+</body>
+</html>

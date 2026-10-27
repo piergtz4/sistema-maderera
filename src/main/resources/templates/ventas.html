@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ventas')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('ventas')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Ventas', 'Documentos del punto de venta seleccionado')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><div><h2>Documentos de <span th:text="${sedeNombre}"></span></h2><p>Versión de prueba sin valor tributario. Los documentos pendientes no modifican stock ni registran cobros.</p></div><a class="primary-button" th:href="@{/ventas/nuevo}">Realizar venta</a></div>
+                <div class="filters"><label>Buscar<input id="buscador" type="search" placeholder="Tipo, cliente o usuario"></label><button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Actualizado</th><th>Tipo</th><th>Número</th><th>Cliente</th><th>Total S/</th><th>Estado</th><th>Creado por</th><th>Acciones</th></tr></thead>
+                    <tbody id="catalogo">
+                        <tr th:each="d : ${documentos}" data-row>
+                            <td th:text="${#temporals.format(d.actualizado, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${d.tipo.nombre}"></td><td th:text="${d.codigoDocumento}"></td>
+                            <td th:text="${d.confirmadoEn != null ? d.clienteNombre : (d.cliente == null ? 'Sin cliente identificado' : d.cliente.nombre)}"></td>
+                            <td th:text="${#numbers.formatDecimal(d.total, 1, 2)}"></td>
+                            <td><span class="badge" th:classappend="${d.estado.name() == 'ANULADO' ? 'anulado' : ''}" th:text="${d.estado.name() == 'BORRADOR' ? 'Pendiente' : d.estado}"></span></td><td th:text="${d.usuario.nombre}"></td>
+                            <td><a class="secondary-button" th:if="${d.estado.name() == 'BORRADOR'}" th:href="@{/ventas/{id}/editar(id=${d.id})}">Continuar</a> <a class="secondary-button" th:href="@{/ventas/{id}(id=${d.id})}">Ver detalle</a></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(documentos)}"><td colspan="8" class="empty">Todavía no hay documentos en esta sede.</td></tr>
+                        <tr id="sinResultados" hidden><td colspan="8" class="empty">No hay coincidencias con la búsqueda.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/catalogo.js}"></script>
+</body>
+</html>

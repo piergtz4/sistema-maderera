@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Registrar compra')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('compras')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Registrar compra', 'Documento del proveedor y mercadería recibida')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card form-card venta-card">
+                <div class="card-header"><h2 th:text="${compra.id == null ? 'Nueva compra' : 'Editar compra pendiente'}"></h2><a class="secondary-button" th:href="@{/proveedores/nuevo}" target="_blank" rel="noopener">Nuevo proveedor</a></div>
+                <form id="formCompra" class="edit-form" th:action="@{/compras/guardar}" th:object="${compra}" method="post">
+                    <input type="hidden" th:field="*{id}"><input type="hidden" th:field="*{version}">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert"><ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul></div>
+                    <div class="form-grid">
+                        <label>Sede receptora<input th:value="${sedeNombre}" disabled></label>
+                        <label>Proveedor<select th:field="*{proveedorId}" required><option value="">Selecciona un proveedor</option><option th:each="p : ${proveedores}" th:value="${p.id}" th:disabled="${!p.estado}" th:text="${p.nombre + (p.numeroDocumento == null ? '' : ' · ' + p.numeroDocumento) + (p.estado ? '' : ' (inactivo)')}"></option></select></label>
+                        <label>Fecha del comprobante<input type="date" th:field="*{fecha}" th:max="${hoy}" required></label>
+                        <label>Tipo de comprobante<select th:field="*{tipo}" required><option th:each="t : ${tipos}" th:value="${t}" th:text="${t}"></option></select></label>
+                        <label class="full-width">Referencia del proveedor<input th:field="*{referencia}" required maxlength="60" placeholder="Ejemplo: F001-000123"><span class="help">Número del documento recibido. Para Otro, ingresa una referencia única del proveedor.</span></label>
+                    </div>
+                    <p class="help" th:if="${#lists.isEmpty(proveedores)}">Primero registra un proveedor. Si lo creas en otra pestaña, recarga este formulario antes de llenarlo.</p>
+                    <div class="venta-productos">
+                        <div class="card-header"><h3>Productos que ingresan a <span th:text="${sedeNombre}"></span></h3><button class="secondary-button" type="button" id="agregarCompra">Agregar producto</button></div>
+                        <p class="help">Usa el precio unitario final del proveedor en soles, incluidos los impuestos que correspondan. No se añade IGV al total. El precio de venta no cambia.</p>
+                        <div class="table-container"><table><thead><tr><th>Producto / unidad</th><th>Cantidad</th><th>Precio de compra S/</th><th>Importe S/</th><th>Acción</th></tr></thead><tbody id="lineasCompra">
+                            <tr th:each="l, fila : *{lineas}" data-linea>
+                                <td><select data-campo="productoId" th:field="*{lineas[__${fila.index}__].productoId}" required aria-label="Producto"><option value="">Selecciona un producto</option><option th:each="p : ${productos}" th:value="${p.id}" th:disabled="${!p.estado or !p.categoria.estado}" th:text="${p.codigo + ' · ' + p.nombre + ' (' + p.unidadMedida + ')'}" th:attr="data-precio=${p.precioCompra},data-unidad=${p.unidadMedida}"></option></select></td>
+                                <td><input data-campo="cantidad" type="number" th:field="*{lineas[__${fila.index}__].cantidad}" min="0.0001" max="99999999.9999" step="0.0001" required aria-label="Cantidad"></td>
+                                <td><input data-campo="precio" type="number" th:field="*{lineas[__${fila.index}__].precio}" min="0" max="99999999.99" step="0.01" required aria-label="Precio de compra"></td>
+                                <td data-importe>0.00</td><td><button class="secondary-button" type="button" data-quitar>Quitar</button></td>
+                            </tr>
+                        </tbody></table></div>
+                        <p class="total-venta">Total de compra: S/ <strong id="totalCompra" aria-live="polite">0.00</strong></p>
+                        <label>Detalles generales<textarea th:field="*{detalles}" maxlength="2000" rows="3"></textarea></label>
+                    </div>
+                    <p class="help">Guardar no ingresa existencias. Revisa la compra y confírmala cuando hayas recibido la mercadería. Si el producto aún no está en esta sede, se registrará al confirmar con stock mínimo 0, ajustable desde Productos.</p>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/compras}">Volver</a><button class="primary-button" type="submit">Guardar y revisar</button></div>
+                </form>
+                <div class="edit-form" th:if="${compra.id != null}"><details th:replace="~{fragments/descartar-compra :: confirmacion(${compra.id}, ${compra.version})}"></details></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/compra-form.js}"></script>
+</body>
+</html>

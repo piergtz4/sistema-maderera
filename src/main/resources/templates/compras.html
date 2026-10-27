@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Compras')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('compras')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Compras', 'Ingreso de mercadería e historial de la sede')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><div><h2>Compras de <span th:text="${sedeNombre}"></span></h2><p>Las compras pendientes no modifican existencias.</p></div><a class="primary-button" th:href="@{/compras/nueva}">Registrar compra</a></div>
+                <div class="filters">
+                    <label>Buscar<input id="buscarCompra" type="search" placeholder="Proveedor, comprobante o código"></label>
+                    <label>Estado<select id="estadoCompra"><option value="">Todos</option><option value="PENDIENTE">Pendiente</option><option value="CONFIRMADA">Confirmada</option></select></label>
+                    <label>Desde<input type="date" id="desdeCompra"></label><label>Hasta<input type="date" id="hastaCompra"></label>
+                <button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
+                <p id="errorFechas" class="notice error" hidden>La fecha desde no puede ser posterior a la fecha hasta.</p>
+                <div class="table-container"><table><thead><tr><th>Registro</th><th>Fecha</th><th>Proveedor</th><th>Comprobante</th><th>Total S/</th><th>Estado</th><th>Creado por</th><th>Acciones</th></tr></thead>
+                    <tbody id="listaCompras">
+                        <tr th:each="c : ${compras}" data-compra th:attr="data-fecha=${c.fecha},data-estado=${c.estado}">
+                            <td th:text="${c.codigo}"></td><td th:text="${#temporals.format(c.fecha, 'dd/MM/yyyy')}"></td><td th:text="${c.proveedorNombre}"></td>
+                            <td th:text="${c.tipo + ' ' + c.referencia}"></td><td th:text="${c.total}"></td><td><span class="badge" th:text="${c.estado}"></span></td><td th:text="${c.usuario.nombre}"></td>
+                            <td><div class="actions"><a class="secondary-button" th:href="@{/compras/{id}(id=${c.id})}">Ver detalle</a><a class="secondary-button" th:if="${c.estado.name() == 'PENDIENTE'}" th:href="@{/compras/{id}/editar(id=${c.id})}">Continuar</a></div></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(compras)}"><td colspan="8" class="empty">Todavía no hay compras registradas en esta sede.</td></tr>
+                        <tr id="sinCompras" hidden><td colspan="8" class="empty">No hay compras que coincidan con los filtros.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/compras.js}"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Inventario')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('inventario')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Inventario', 'Existencias de tu sede')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><h2>Existencias de <span th:text="${sedeNombre}"></span></h2><a id="exportarInventario" class="secondary-button" th:href="@{/inventario/exportar}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg><span>Exportar Excel</span></a></div>
+                <div class="filters">
+                    <label>Buscar<input id="buscador" type="search" placeholder="Código, nombre o categoría"></label>
+                    <label>Estado<select id="filtroEstado"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></label>
+                <button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Código</th><th>Producto</th><th>Sede</th><th>Unidad</th><th>Stock</th><th>Situación</th></tr></thead>
+                    <tbody id="catalogo">
+                        <tr th:each="i : ${existencias}" data-row th:attr="data-estado=${i.activo},data-busqueda=${i.textoBusqueda}">
+                            <td><span class="code" th:text="${i.codigo}"></span></td><td><strong th:text="${i.nombre}"></strong><small th:text="${i.categoria}"></small></td>
+                            <td th:text="${i.sede}"></td><td th:text="${i.unidad}"></td>
+                            <td class="number" th:text="${@formatoCantidad.mostrar(i.stock)}"></td>
+                            <td><span class="badge" th:classappend="${!i.activo ? ' inactive' : (i.stockBajo ? ' warning' : '')}"
+                                th:text="${i.situacion}"></span></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(existencias)}"><td colspan="6" class="empty">Esta sede todavía no tiene productos registrados en su inventario.</td></tr>
+                        <tr id="sinResultados" hidden><td colspan="6" class="empty">No hay coincidencias con los filtros.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/catalogo.js}"></script>
+</body>
+</html>

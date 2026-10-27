@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Usuarios')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('usuarios')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Usuarios', 'Administra los accesos de la empresa')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><div><h2>Cuentas registradas</h2><p>Los usuarios de sede solo acceden al local asignado.</p></div>
+                    <a class="primary-button" th:href="@{/usuarios/nuevo}">Nuevo usuario</a>
+                </div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Sede</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody>
+                        <tr th:each="u : ${cuentas}">
+                            <td th:text="${u.nombre}"></td>
+                            <td><span class="code" th:text="${u.usuario}"></span></td>
+                            <td th:switch="${u.rol}"><span th:case="'ADMINISTRADOR_GENERAL'">Administrador general</span><span th:case="'ADMINISTRADOR'">Administrador de sede</span><span th:case="'CONSULTA'">Consulta</span></td>
+                            <td th:text="${u.sede == null ? 'Todas, al seleccionarla' : u.sede.nombre + (u.sede.estado ? '' : ' (inactiva)')}"></td>
+                            <td><span class="badge" th:classappend="${u.estado ? '' : ' inactive'}" th:text="${u.estado ? 'Activo' : 'Inactivo'}"></span></td>
+                            <td><div class="actions">
+                                <a class="secondary-button" th:href="@{/usuarios/{id}/editar(id=${u.id})}">Editar</a>
+                                <form th:if="${u.id != usuarioId}" th:action="@{/usuarios/{id}/estado(id=${u.id})}" method="post">
+                                    <button class="secondary-button" type="submit" th:disabled="${!u.estado and u.sede != null and !u.sede.estado}"
+                                        th:text="${u.estado ? 'Desactivar' : 'Activar'}"></button>
+                                </form>
+                            </div></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(cuentas)}"><td colspan="6" class="empty">Todavía no hay usuarios.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

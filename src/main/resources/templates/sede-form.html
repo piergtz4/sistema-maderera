@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Sede')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('sedes')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Datos de la sede', 'Identifica el local y su ubicación')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card form-card">
+                <div class="card-header"><h2 th:text="${sede.id == null ? 'Nueva sede' : 'Editar sede'}"></h2></div>
+                <form class="edit-form" th:action="@{/sedes/guardar}" th:object="${sede}" method="post">
+                    <input type="hidden" th:field="*{id}">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
+                        <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                    </div>
+                    <div class="form-grid">
+                        <label class="full-width">Nombre de la sede<input th:field="*{nombre}" required maxlength="100" placeholder="Ejemplo: Sede Ica"></label>
+                        <label class="full-width">Identificador de documentos<input th:field="*{codigoDocumentos}" type="number" min="1" max="999" step="1" placeholder="Automático al crear la sede"><span class="help">1 identifica B001, F001, N001 y C001. 2 identifica B002, F002, N002 y C002. Debe ser único en la empresa y no se puede cambiar después de usar su numeración.</span></label>
+                        <label>Departamento<input th:field="*{departamento}" required maxlength="100"></label>
+                        <label>Provincia<input th:field="*{provincia}" required maxlength="100"></label>
+                        <label>Distrito<input th:field="*{distrito}" required maxlength="100"></label>
+                        <label>Teléfono<input th:field="*{telefono}" type="tel" maxlength="20"></label>
+                        <label class="full-width">Dirección<textarea th:field="*{direccion}" maxlength="255" rows="2"></textarea></label>
+                    </div>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/sedes}">Cancelar</a><button class="primary-button" type="submit">Guardar sede</button></div>
+                </form>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

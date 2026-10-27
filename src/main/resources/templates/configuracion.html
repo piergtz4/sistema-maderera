@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Configuración')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('configuracion')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Configuración de la empresa', 'Datos visibles en MADERPRO')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card form-card">
+                <div class="card-header"><div><h2>Perfil de la empresa</h2><p>Esta información identifica a la empresa que utiliza el sistema.</p></div></div>
+                <form class="edit-form" th:action="@{/configuracion}" th:object="${empresa}" method="post" enctype="multipart/form-data">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
+                        <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                    </div>
+                    <div class="company-logo">
+                        <img th:if="${tieneLogo}" th:src="@{/empresa/logo}" alt="Logo actual de la empresa">
+                        <div th:unless="${tieneLogo}" class="logo-placeholder">Sin logo</div>
+                        <label>Logo de la empresa
+                            <input name="logo" type="file" accept="image/png,image/jpeg,image/webp">
+                            <span class="help">PNG, JPG o WEBP. Tamaño máximo: 2 MB.</span>
+                        </label>
+                        <label class="check-option" th:if="${tieneLogo}"><input th:field="*{eliminarLogo}" type="checkbox"><span>Eliminar el logo actual</span></label>
+                    </div>
+                    <div class="form-grid">
+                        <label>Nombre comercial<input th:field="*{nombreComercial}" required maxlength="100" autocomplete="organization"></label>
+                        <label>Razón social<input th:field="*{razonSocial}" maxlength="150"></label>
+                        <label>RUC<input th:field="*{ruc}" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" placeholder="11 dígitos"></label>
+                        <label>Teléfono<input th:field="*{telefono}" maxlength="30" autocomplete="tel"></label>
+                        <label>Correo electrónico<input th:field="*{email}" type="email" maxlength="150" autocomplete="email"></label>
+                        <label class="full-width">Dirección<textarea th:field="*{direccion}" maxlength="255"></textarea></label>
+                    </div>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/dashboard}">Cancelar</a><button class="primary-button" type="submit">Guardar configuración</button></div>
+                </form>
+            </section>
+            <section id="cuentas" class="dashboard-card form-card">
+                <div class="card-header"><div><h2>Cuentas y Yape</h2><p>Destinos en soles para los pagos recibidos por la empresa.</p></div></div>
+                <div class="table-container"><table><thead><tr><th>Banco</th><th>Cuenta</th><th>Celular Yape</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
+                    <tr th:each="c : ${cuentas}"><td th:text="${c.banco}"></td><td th:text="${c.numero}"></td><td th:text="${c.celularYape ?: '—'}"></td><td th:text="${c.activa ? 'Activa' : 'Inactiva'}"></td><td><form th:action="@{/configuracion/cuentas/{id}/estado(id=${c.id})}" method="post"><input type="hidden" name="activa" th:value="${!c.activa}"><button class="secondary-button" th:text="${c.activa ? 'Desactivar' : 'Activar'}"></button></form></td></tr>
+                    <tr th:if="${#lists.isEmpty(cuentas)}"><td colspan="5" class="empty">Registra las cuentas de la empresa para habilitar transferencias y Yape.</td></tr>
+                </tbody></table></div>
+                <form class="edit-form" th:action="@{/configuracion/cuentas}" th:object="${cuenta}" method="post">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert"><ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul></div>
+                    <div class="form-grid">
+                        <label>Banco<select th:field="*{banco}" required><option value="">Selecciona un banco</option><option th:each="b : ${bancos}" th:value="${b}" th:text="${b}"></option></select></label>
+                        <label>Número de cuenta en soles<input th:field="*{numero}" required pattern="[0-9]{10,30}" maxlength="30" inputmode="numeric" placeholder="Sin espacios ni guiones"></label>
+                        <label>Celular Yape (opcional, solo BCP)<input th:field="*{celularYape}" pattern="9[0-9]{8}" maxlength="9" inputmode="tel" placeholder="9 dígitos"></label>
+                    </div>
+                    <p class="help">Completa el celular solo si esta cuenta BCP recibe los yapeos. Se admite un Yape activo. Cuenta y celular se consultan aquí; al pagar con Yape se muestra únicamente BCP. Las cuentas registradas se conservan para mantener el historial.</p>
+                    <div class="form-actions"><button class="primary-button">Agregar cuenta</button></div>
+                </form>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

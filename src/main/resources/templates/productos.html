@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Productos')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('productos')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Productos', 'Catálogo común de la empresa')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><div><h2>Productos registrados en <span th:text="${empresaNombre}">la empresa</span></h2><p th:if="${puedeOperarInventario}">El catálogo es común; edita cada producto para ver el stock de la sede actual.</p><p th:unless="${puedeOperarInventario}">El catálogo es común y las existencias se consultan en Inventario.</p></div>
+                    <a class="primary-button" th:if="${puedeEditarCatalogo}" th:href="@{/productos/nuevo}">Nuevo producto</a>
+                </div>
+                <div class="filters">
+                    <label>Buscar<input id="buscador" type="search" placeholder="Código, nombre o categoría"></label>
+                    <label>Estado<select id="filtroEstado"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></label>
+                <button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Código</th><th>Producto</th><th>Sedes registradas</th><th>Categoría</th><th>Unidad</th><th>Compra</th><th>Venta</th><th th:if="${puedeOperarInventario}">Acciones</th></tr></thead>
+                    <tbody id="catalogo">
+                        <tr th:each="p : ${productos}" data-row th:attr="data-estado=${p.estado}">
+                            <td><span class="code" th:text="${p.codigo}"></span></td>
+                            <td><span th:text="${p.nombre}"></span><span class="badge inactive product-status" th:unless="${p.estado}">Inactivo</span></td>
+                            <td th:text="${sedesPorProducto[p.id] != null ? sedesPorProducto[p.id] : 'Sin sedes'}"></td>
+                            <td th:text="${p.categoria.nombre}"></td><td th:text="${p.unidadMedida}"></td>
+                            <td class="number" th:text="'S/ ' + ${#numbers.formatDecimal(p.precioCompra, 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td class="number" th:text="'S/ ' + ${#numbers.formatDecimal(p.precioVenta, 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td th:if="${puedeOperarInventario}"><div class="actions">
+                                <a class="secondary-button" th:href="@{/productos/editar/{id}(id=${p.id})}">Editar</a>
+                                <form th:if="${puedeEditarCatalogo}" th:action="@{/productos/cambiar-estado/{id}(id=${p.id})}" method="post"><button class="secondary-button" type="submit" th:text="${p.estado ? 'Desactivar' : 'Activar'}"></button></form>
+                            </div></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(productos)}"><td th:attr="colspan=${puedeOperarInventario ? 8 : 7}" class="empty">Todavía no hay productos. Crea una categoría y registra tu primer producto.</td></tr>
+                        <tr id="sinResultados" hidden><td th:attr="colspan=${puedeOperarInventario ? 8 : 7}" class="empty">No hay coincidencias con los filtros.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/catalogo.js}"></script>
+</body>
+</html>

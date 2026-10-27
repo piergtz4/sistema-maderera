@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"><body>
+<details th:fragment="confirmacion(id, version)" class="anulacion-venta">
+    <summary>Descartar compra pendiente</summary>
+    <form class="edit-form" th:action="@{/compras/{id}/descartar(id=${id})}" method="post">
+        <input type="hidden" name="version" th:value="${version}">
+        <p>Se eliminará esta compra pendiente y sus productos preparados. No se modificará el inventario. Esta acción no se puede deshacer.</p>
+        <div class="form-actions"><button class="secondary-button" type="submit">Sí, eliminar compra pendiente</button></div>
+    </form>
+</details>
+</body></html>

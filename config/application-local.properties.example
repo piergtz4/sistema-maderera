@@ -1,0 +1,8 @@
+# Copiar como config/application-local.properties y completar los datos locales.
+spring.datasource.username=${DB_USER:root}
+spring.datasource.password=${DB_PASSWORD:}
+spring.thymeleaf.cache=false
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+maderpro.demo.enabled=true
+maderpro.demo.password=${MADERPRO_DEMO_PASSWORD:}

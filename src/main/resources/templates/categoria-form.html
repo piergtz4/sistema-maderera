@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Categoría')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('categorias')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Categoría', 'Completa los datos del catálogo')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card form-card">
+                <div class="card-header"><h2 th:text="${categoria.id == null ? 'Nueva categoría' : 'Editar categoría'}"></h2></div>
+                <form class="edit-form" th:action="@{/categorias/guardar}" th:object="${categoria}" method="post">
+                    <input type="hidden" th:field="*{id}">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
+                        <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                    </div>
+                    <div class="form-grid">
+                        <label>Nombre<input id="nombreCategoria" th:field="*{nombre}" required maxlength="100" placeholder="Ejemplo: FERRETERIA"></label>
+                        <label>Código automático<input id="codigoCategoria" th:value="${categoria.codigo}" th:attr="data-nuevo=${categoria.id == null},data-codigos=${codigosCategorias}" placeholder="CAT-FER" disabled></label>
+                        <label class="full-width">Descripción<textarea th:field="*{descripcion}" maxlength="255" rows="3"></textarea></label>
+                        <label>Estado<select th:field="*{estado}"><option value="true">Activa</option><option value="false">Inactiva</option></select></label>
+                    </div>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/categorias}">Cancelar</a><button class="primary-button" type="submit">Guardar categoría</button></div>
+                </form>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/categoria-form.js}"></script>
+
+</body>
+</html>

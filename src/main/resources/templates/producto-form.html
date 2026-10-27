@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Producto')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('productos')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Producto', 'Catálogo e inventario por sede')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card form-card">
+                <div class="card-header"><h2 th:text="${producto.id == null ? 'Nuevo producto' : 'Editar producto'}"></h2></div>
+                <form class="edit-form" th:action="${puedeEditarCatalogo} ? @{/productos/guardar} : @{/productos/{id}/inventario(id=${producto.id})}" th:object="${producto}" method="post">
+                    <input type="hidden" th:field="*{id}">
+                    <input th:if="${producto.id != null and producto.inventarioVersion != null}" type="hidden" th:field="*{inventarioVersion}">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
+                        <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                    </div>
+                    <div class="form-grid">
+                        <label>Código<input th:value="${producto.id == null ? 'Se asigna al guardar' : producto.codigo}" th:disabled="${!puedeEditarCatalogo}" readonly></label>
+                        <label>Nombre<input th:field="*{nombre}" th:disabled="${!puedeEditarCatalogo}" required maxlength="150"></label>
+                        <label>Categoría<select th:field="*{categoriaId}" th:disabled="${!puedeEditarCatalogo}" required><option value="">Selecciona una categoría</option><option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}"></option></select></label>
+                        <label>Unidad de medida<select th:field="*{unidadMedida}" th:disabled="${producto.id != null or !puedeEditarCatalogo}" required><option value="">Selecciona una unidad</option><option value="UND">Unidad (UND)</option><option value="KG">Kilogramo (KG)</option><option value="P²">Pie cuadrado (P²)</option></select><input th:if="${producto.id != null and puedeEditarCatalogo}" type="hidden" name="unidadMedida" th:value="${producto.unidadMedida}"></label>
+                        <label>Precio de compra (S/)<input th:field="*{precioCompra}" th:disabled="${!puedeEditarCatalogo}" type="number" min="0" max="99999999.99" step="0.01" required></label>
+                        <label>Precio de venta (S/)<input th:field="*{precioVenta}" th:disabled="${!puedeEditarCatalogo}" type="number" min="0" max="99999999.99" step="0.01" required></label>
+                        <p class="help full-width">Existencias de <strong th:text="${sedeNombre}">esta sede</strong>. El catálogo es común, pero cada sede mantiene su propio stock.</p>
+                        <label>Stock actual<input name="stockInicial" th:value="${producto.stockInicial != null ? @formatoCantidad.mostrar(producto.stockInicial) : ''}" type="number" min="0" max="99999999.9999" step="0.0001" required></label>
+                        <label>Stock mínimo<input name="stockMinimo" th:value="${producto.stockMinimo != null ? @formatoCantidad.mostrar(producto.stockMinimo) : ''}" type="number" min="0" max="99999999.9999" step="0.0001" required></label>
+                        <label th:if="${producto.id != null and puedeEditarCatalogo}">Estado<select th:field="*{estado}"><option value="true">Activo</option><option value="false">Inactivo</option></select></label>
+                    </div>
+                    <p class="help" th:if="${producto.id == null}">El stock inicial mayor que cero quedará registrado como una entrada. Para UND usa cantidades enteras.</p>
+                    <p class="help" th:if="${producto.id != null and !inventarioRegistrado and producto.estado}">Este producto aún no tiene inventario en esta sede. Al guardar se registrará aquí con las cantidades indicadas.</p>
+                    <p class="help" th:if="${producto.id != null and !inventarioRegistrado and !producto.estado}">Este producto está inactivo. Un administrador general debe activarlo antes de registrar existencias en esta sede.</p>
+                    <p class="help" th:if="${producto.id != null and inventarioRegistrado}">Si cambias el stock actual, el sistema registrará un ajuste en el historial. La unidad de medida no se puede cambiar.</p>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/productos}">Cancelar</a><button class="primary-button" type="submit" th:text="${puedeEditarCatalogo ? 'Guardar producto' : 'Guardar inventario'}">Guardar producto</button></div>
+                </form>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+
+</body>
+</html>

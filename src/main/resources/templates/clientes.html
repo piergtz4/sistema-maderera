@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Clientes')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('clientes')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Clientes', 'Clientes compartidos por las sedes de la empresa')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card">
+                <div class="card-header"><h2>Clientes de <span th:text="${empresaNombre}"></span></h2><a class="primary-button" th:href="@{/clientes/nuevo}">Nuevo cliente</a></div>
+                <div class="filters">
+                    <label>Buscar<input id="buscador" type="search" placeholder="Nombre, documento o teléfono"></label>
+                    <label>Estado<select id="filtroEstado"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></label>
+                <button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
+                <div class="table-container"><table>
+                    <thead><tr><th>Nombre o razón social</th><th>Documento</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody id="catalogo">
+                        <tr th:each="c : ${clientes}" data-row th:attr="data-estado=${c.estado}">
+                            <td th:text="${c.nombre}"></td>
+                            <td th:text="${c.numeroDocumento == null ? 'Sin documento' : c.tipoIdentificacion + ': ' + c.numeroDocumento}"></td>
+                            <td th:text="${c.telefono}"></td>
+                            <td><span class="badge" th:classappend="${c.estado ? '' : ' inactive'}" th:text="${c.estado ? 'Activo' : 'Inactivo'}"></span></td>
+                            <td><div class="actions">
+                                <a class="secondary-button" th:href="@{/clientes/{id}/editar(id=${c.id})}">Editar</a>
+                                <form th:if="${esAdministradorGeneral}" th:action="@{/clientes/{id}/estado(id=${c.id})}" method="post"><button class="secondary-button" type="submit" th:text="${c.estado ? 'Desactivar' : 'Activar'}"></button></form>
+                            </div></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(clientes)}"><td colspan="5" class="empty">Todavía no hay clientes registrados.</td></tr>
+                        <tr id="sinResultados" hidden><td colspan="5" class="empty">No hay coincidencias con los filtros.</td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/catalogo.js}"></script>
+</body>
+</html>
+

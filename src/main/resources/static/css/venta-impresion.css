@@ -1,0 +1,47 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #eef0f2; color: #20262c; font: 13px/1.45 Arial, sans-serif; }
+.herramientas { max-width: 210mm; margin: 20px auto; padding: 0 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.herramientas a { color: #374553; }
+.herramientas button { border: 0; border-radius: 6px; padding: 12px 18px; background: #374553; color: white; cursor: pointer; font: inherit; }
+.herramientas p { width: 100%; margin: 0; }
+.documento { max-width: 210mm; margin: 0 auto 28px; padding: 14mm; background: white; box-shadow: 0 2px 12px #0001; overflow-wrap: anywhere; }
+.cabecera { display: grid; grid-template-columns: 1fr 64mm; gap: 24px; border-bottom: 2px solid #374553; padding-bottom: 18px; }
+h1 { margin: 0 0 8px; font-size: 23px; }
+h2 { font-size: 15px; margin: 16px 0 8px; }
+p { margin: 5px 0; }
+.identificador { border: 1px solid #77818a; padding: 12px; text-align: center; align-self: start; border-radius: 6px; }
+.identificador h2 { margin: 0 0 6px; }
+.identificador strong { font-size: 21px; }
+.identificador p { font-size: 11px; }
+.cliente { padding: 12px 0; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 12px; }
+th, td { border-bottom: 1px solid #d1d6da; padding: 9px 6px; text-align: left; vertical-align: top; }
+th { background: #f1f3f5; font-size: 11px; }
+.productos th:first-child { width: 32%; }
+.productos th:nth-child(2) { width: 10%; }
+.numero { text-align: right; font-variant-numeric: tabular-nums; }
+small { display: block; font-size: 10px; color: #515b65; margin-top: 3px; }
+.totales { margin: 14px 0 18px auto; width: 72mm; break-inside: avoid; }
+.totales p { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; }
+.total { border-top: 1px solid #77818a; font-size: 17px; }
+.detalles { white-space: pre-wrap; }
+.anulado { border: 2px solid #a32121; color: #8b1b1b; margin-top: 14px; padding: 10px; break-inside: avoid; }
+.anulado h2 { margin: 0; }
+.resumen { text-align: right; margin-top: 10px; }
+footer { border-top: 1px solid #d1d6da; text-align: center; font-size: 10px; margin-top: 24px; padding-top: 10px; }
+@media screen and (max-width: 650px) {
+    .documento { padding: 16px; }
+    .cabecera { grid-template-columns: 1fr; gap: 12px; }
+    .identificador { max-width: 280px; }
+    th, td { padding: 7px 3px; font-size: 10px; }
+}
+@page { size: A4; margin: 12mm; }
+@media print {
+    body { background: white; font-size: 11px; }
+    .herramientas { display: none; }
+    .documento { max-width: none; padding: 0; margin: 0; box-shadow: none; }
+    thead { display: table-header-group; }
+    tr, .cabecera, .cliente { break-inside: avoid; }
+    h2 { break-after: avoid; }
+    .anulado { color: black; border-color: black; }
+}

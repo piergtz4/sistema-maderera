@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Mi cuenta')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('mi-cuenta')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Mi cuenta', 'Actualiza tu contraseña de acceso')}"></header>
+        <section class="dashboard-content">
+            <section class="dashboard-card form-card">
+                <div class="card-header"><div><h2 th:text="${usuarioNombre}">Usuario</h2><p>Cuenta: <span th:text="${usuario}"></span>. Al cambiar la contraseña tendrás que ingresar de nuevo.</p></div></div>
+                <form class="edit-form" th:action="@{/mi-cuenta/clave}" th:object="${clave}" method="post">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
+                        <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                    </div>
+                    <div class="form-grid">
+                        <label class="full-width">Contraseña actual<input name="actual" type="password" required autocomplete="current-password"></label>
+                        <label>Nueva contraseña<input name="nueva" type="password" required minlength="12" maxlength="72" autocomplete="new-password"><span class="help">Mínimo 12 caracteres, con letras y números.</span></label>
+                        <label>Confirmar nueva contraseña<input name="confirmacion" type="password" required autocomplete="new-password"></label>
+                    </div>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/dashboard}">Cancelar</a><button class="primary-button" type="submit">Cambiar contraseña</button></div>
+                </form>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

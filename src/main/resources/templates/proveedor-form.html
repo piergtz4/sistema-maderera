@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Datos del proveedor')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar('proveedores')}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Datos del proveedor', 'Identificación y contacto')}"></header>
+        <section class="dashboard-content">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+            <section class="dashboard-card form-card">
+                <div class="card-header"><h2 th:text="${proveedor.id == null ? 'Nuevo proveedor' : 'Editar proveedor'}"></h2></div>
+                <form class="edit-form" th:action="@{/proveedores/guardar}" th:object="${proveedor}" method="post">
+                    <input type="hidden" th:field="*{id}"><input type="hidden" th:field="*{version}">
+                    <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
+                        <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                    </div>
+                    <div class="form-grid">
+                        <label>Tipo de documento<select th:field="*{tipoIdentificacion}" required><option value="SIN_DOCUMENTO">Sin documento</option><option value="DNI">DNI</option><option value="RUC">RUC</option><option value="OTRO">Otro documento</option></select></label>
+                        <label>Número de documento<input th:field="*{numeroDocumento}" maxlength="20"><span class="help">Déjalo vacío si seleccionas Sin documento.</span></label>
+                        <label class="full-width">Nombre completo o razón social<input th:field="*{nombre}" required maxlength="150"></label>
+                        <label>Teléfono<input th:field="*{telefono}" type="tel" maxlength="30"></label>
+                        <label>Correo electrónico<input th:field="*{email}" type="email" maxlength="150"></label>
+                        <label class="full-width">Dirección<textarea th:field="*{direccion}" maxlength="255" rows="2"></textarea></label>
+                    </div>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/proveedores}">Cancelar</a><button class="primary-button" type="submit">Guardar proveedor</button></div>
+                </form>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+<script th:src="@{/js/catalogo.js}"></script>
+</body>
+</html>
+
