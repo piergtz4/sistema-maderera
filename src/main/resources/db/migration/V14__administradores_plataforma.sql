@@ -1,0 +1,7 @@
+CREATE TABLE administradores_plataforma (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    usuario VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    estado BOOLEAN NOT NULL DEFAULT TRUE
+);
