@@ -47,7 +47,8 @@ public class SecurityConfig {
                         "/productos/nuevo").hasRole("ADMINISTRADOR_GENERAL")
                 .requestMatchers("/productos/editar/**")
                     .hasAnyRole("ADMINISTRADOR_GENERAL", "ADMINISTRADOR")
-                .anyRequest().authenticated())
+                .anyRequest().hasAnyRole(
+                    "ADMINISTRADOR_GENERAL", "ADMINISTRADOR", "CONSULTA"))
             .userDetailsService(usuarios)
             .exceptionHandling(errors -> errors
                 .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/")))

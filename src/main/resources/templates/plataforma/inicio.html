@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADERPRO | Plataforma</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+</head>
+<body>
+    <main class="login-page">
+        <section class="brand-panel">
+            <div class="brand-overlay"></div>
+
+            <div class="brand-content">
+                <div class="brand-logo">
+                    <img th:src="@{/img/LogoPro.png}" alt="Logo MADERPRO">
+                </div>
+
+                <h1 class="brand-name">MADER<span>PRO</span></h1>
+                <p class="brand-subtitle">Administración de plataforma</p>
+                <div class="brand-divider"></div>
+            </div>
+        </section>
+
+        <section class="login-panel">
+            <div class="login-content">
+                <header class="login-header">
+                    <h2>Administración de plataforma</h2>
+                    <p>
+                        Bienvenido,
+                        <strong th:text="${nombreAdministrador}">
+                            Administrador
+                        </strong>.
+                    </p>
+                </header>
+
+                <form class="login-form"
+                      th:action="@{/plataforma/logout}"
+                      method="post">
+                    <button type="submit" class="login-button">
+                        Cerrar sesión
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
