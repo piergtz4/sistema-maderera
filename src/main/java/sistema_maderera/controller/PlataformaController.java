@@ -8,9 +8,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import sistema_maderera.security.AdministradorPlataformaPrincipal;
 
+import sistema_maderera.service.PlataformaEmpresaService;
+
 @Controller
 @RequestMapping("/plataforma")
 public class PlataformaController {
+
+    private final PlataformaEmpresaService empresas;
+
+    public PlataformaController(PlataformaEmpresaService empresas) {
+        this.empresas = empresas;
+    }
 
     @GetMapping("/login")
     public String login(
@@ -29,7 +37,7 @@ public class PlataformaController {
             Model model) {
 
         model.addAttribute("nombreAdministrador", administrador.getNombre());
-
+        model.addAttribute("empresas", empresas.listar());
         return "plataforma/inicio";
     }
 }

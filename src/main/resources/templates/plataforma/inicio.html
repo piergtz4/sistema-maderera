@@ -3,44 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MADERPRO | Plataforma</title>
-    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <title>MADERPRO | Empresas</title>
+    <link rel="stylesheet" th:href="@{/css/plataforma.css}">
 </head>
 <body>
-    <main class="login-page">
-        <section class="brand-panel">
-            <div class="brand-overlay"></div>
-
-            <div class="brand-content">
-                <div class="brand-logo">
-                    <img th:src="@{/img/LogoPro.png}" alt="Logo MADERPRO">
+    <header class="encabezado">
+        <div class="barra">
+            <div class="marca">
+                <img th:src="@{/img/LogoPro.png}" alt="Logo MADERPRO">
+                <div>
+                    <strong>MADER<span>PRO</span></strong>
+                    <p>Administración de plataforma</p>
                 </div>
-
-                <h1 class="brand-name">MADER<span>PRO</span></h1>
-                <p class="brand-subtitle">Administración de plataforma</p>
-                <div class="brand-divider"></div>
             </div>
-        </section>
 
-        <section class="login-panel">
-            <div class="login-content">
-                <header class="login-header">
-                    <h2>Administración de plataforma</h2>
-                    <p>
-                        Bienvenido,
-                        <strong th:text="${nombreAdministrador}">
-                            Administrador
-                        </strong>.
-                    </p>
-                </header>
-
-                <form class="login-form"
-                      th:action="@{/plataforma/logout}"
-                      method="post">
-                    <button type="submit" class="login-button">
-                        Cerrar sesión
-                    </button>
+            <div class="cuenta">
+                <span th:text="${nombreAdministrador}">Administrador</span>
+                <form th:action="@{/plataforma/logout}" method="post">
+                    <button type="submit">Cerrar sesión</button>
                 </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="contenido">
+        <section class="tarjeta">
+            <div class="titulo">
+                <h1>Empresas</h1>
+                <span>
+                    Total:
+                    <strong th:text="${#lists.size(empresas)}">0</strong>
+                </span>
+            </div>
+
+            <div class="tabla-contenedor">
+                <table aria-label="Empresas registradas">
+                    <thead>
+                        <tr>
+                            <th scope="col">Empresa</th>
+                            <th scope="col">RUC</th>
+                            <th scope="col">Correo</th>
+                            <th scope="col">Teléfono</th>
+                            <th scope="col">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="empresa : ${empresas}">
+                            <td>
+                                <strong th:text="${empresa.nombreComercial}">
+                                    Nombre comercial
+                                </strong>
+                            </td>
+                            <td th:text="${#strings.isEmpty(empresa.ruc) ? '—' : empresa.ruc}"></td>
+                            <td th:text="${#strings.isEmpty(empresa.email) ? '—' : empresa.email}"></td>
+                            <td th:text="${#strings.isEmpty(empresa.telefono) ? '—' : empresa.telefono}"></td>
+                            <td>
+                                <span class="estado"
+                                      th:classappend="${empresa.estado ? 'activa' : 'inactiva'}"
+                                      th:text="${empresa.estado ? 'Activa' : 'Inactiva'}">
+                                    Activa
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(empresas)}">
+                            <td colspan="5" class="vacio">
+                                No hay empresas registradas.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </section>
     </main>

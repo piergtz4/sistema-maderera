@@ -1,0 +1,157 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f2ee;
+    color: #35281f;
+}
+
+.encabezado {
+    background: #35271d;
+    color: #ffffff;
+}
+
+.barra {
+    max-width: 1240px;
+    margin: auto;
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.marca, .cuenta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.marca img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.marca strong {
+    font-size: 24px;
+}
+
+.marca strong span {
+    color: #f48325;
+}
+
+.marca p {
+    margin: 5px 0 0;
+    color: #d6c6b7;
+    font-size: 13px;
+}
+
+.cuenta {
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 10px 16px;
+    border: 1px solid #ae8b6e;
+    border-radius: 8px;
+    background: transparent;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #574130;
+}
+
+button:focus-visible {
+    outline: 3px solid #f48325;
+    outline-offset: 3px;
+}
+
+.contenido {
+    max-width: 1240px;
+    margin: 28px auto;
+    padding: 0 24px;
+}
+
+.tarjeta {
+    background: #ffffff;
+    border: 1px solid #dfd5ca;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.titulo {
+    padding: 20px;
+    background: #eee4d7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.titulo h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.tabla-contenedor {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+
+th, td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e9e1d8;
+}
+
+th {
+    background: #faf6f0;
+    color: #71543d;
+}
+
+tbody tr:nth-child(even) {
+    background: #fcfaf7;
+}
+
+tbody tr:hover {
+    background: #fff3e5;
+}
+
+.estado {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.activa {
+    background: #e4f2e8;
+    color: #23633b;
+}
+
+.inactiva {
+    background: #fbe8e5;
+    color: #963f34;
+}
+
+.vacio {
+    text-align: center;
+    padding: 32px;
+    color: #74675c;
+}
