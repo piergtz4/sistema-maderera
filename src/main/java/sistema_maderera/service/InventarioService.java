@@ -51,9 +51,9 @@ public class InventarioService {
         return inventarios.listarPorSede(sedeId).stream().map(this::vista).toList();
     }
 
-    public Map<Long, String> sedesRegistradasPorProducto() {
+    public Map<Long, String> sedesRegistradasPorProducto(Long empresaId) {
         Map<Long, String> sedesPorProducto = new HashMap<>();
-        for (Inventario inventario : inventarios.listarSedesRegistradas()) {
+        for (Inventario inventario : inventarios.listarSedesRegistradas(empresaId)) {
             Sede sede = inventario.getSede();
             String nombre = sede.getNombre() + (sede.getEstado() ? "" : " (inactiva)");
             sedesPorProducto.merge(inventario.getProducto().getId(), nombre,
@@ -75,15 +75,15 @@ public class InventarioService {
     @Transactional
     public Inventario registrar(Long sedeId, RegistroInventarioForm form) {
         validacion.validar(form);
-        Producto producto = productos.buscar(form.getProductoId());
+        Sede sede = sedes.findById(sedeId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Sede no encontrada."));
+        Producto producto = productos.buscar(sede.getEmpresa().getId(), form.getProductoId());
         if (!producto.getEstado()) {
             throw new ReglaNegocioException("El producto está inactivo.");
         }
         if (inventarios.existsByProductoIdAndSedeId(producto.getId(), sedeId)) {
             throw new ReglaNegocioException("El producto ya está registrado en esta sede.");
         }
-        Sede sede = sedes.findById(sedeId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Sede no encontrada."));
         if (!sede.getEstado()) throw new ReglaNegocioException("La sede está inactiva.");
         Inventario inventario = new Inventario();
         inventario.setProducto(producto);

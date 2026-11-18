@@ -16,8 +16,9 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
     List<Inventario> listarPorSede(Long sedeId);
 
     @Query("select i from Inventario i join fetch i.producto join fetch i.sede "
+            + "where i.sede.empresa.id = :empresaId and i.producto.empresa.id = :empresaId "
             + "order by i.producto.id, i.sede.nombre")
-    List<Inventario> listarSedesRegistradas();
+    List<Inventario> listarSedesRegistradas(Long empresaId);
 
     boolean existsByProductoIdAndSedeId(Long productoId, Long sedeId);
 

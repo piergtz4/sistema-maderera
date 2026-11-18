@@ -6,8 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import sistema_maderera.entity.Categoria;
 
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
-    Optional<Categoria> findByCodigoIgnoreCase(String codigo);
-    Optional<Categoria> findByNombreIgnoreCase(String nombre);
-    List<Categoria> findAllByOrderByNombreAsc();
-    List<Categoria> findByEstadoTrueOrderByNombreAsc();
+    Optional<Categoria> findByIdAndEmpresaId(Long id, Long empresaId);
+    Optional<Categoria> findByEmpresaIdAndCodigoIgnoreCase(Long empresaId, String codigo);
+    Optional<Categoria> findByEmpresaIdAndNombreIgnoreCase(Long empresaId, String nombre);
+    List<Categoria> findByEmpresaIdOrderByNombreAsc(Long empresaId);
+    List<Categoria> findByEmpresaIdAndEstadoTrueOrderByNombreAsc(Long empresaId);
 }

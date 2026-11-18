@@ -99,7 +99,7 @@ public class DashboardService {
         long bajo = activos.stream().filter(i -> i.getStock().signum() > 0 && i.getStock().compareTo(i.getStockMinimo()) <= 0).count();
         var alertas = activos.stream().filter(i -> i.getStock().signum() == 0 || i.getStock().compareTo(i.getStockMinimo()) <= 0)
                 .map(i -> new Alerta(i.getProducto().getNombre(), i.getProducto().getUnidadMedida(), i.getStock(), i.getStock().signum() == 0 ? "Sin stock" : "Stock bajo")).toList();
-        return new Informe(documentos.size(), total, puntos, mejores, existencias.size(), productos.count(), cero, bajo,
+        return new Informe(documentos.size(), total, puntos, mejores, existencias.size(), productos.contarPorEmpresaDeSede(sedeId), cero, bajo,
                 activos.size() - cero - bajo, alertas, cobros(sedeId, periodo));
     }
 

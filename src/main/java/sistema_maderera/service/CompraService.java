@@ -49,7 +49,7 @@ public class CompraService {
     }
 
     public List<Compra> listar(Long sedeId) { return compras.findBySedeIdOrderByActualizadoDescIdDesc(sedeId); }
-    public List<Producto> productosDisponibles() { return productos.findAllByOrderByNombreAsc(); }
+    public List<Producto> productosDisponibles(Long empresaId) { return productos.findByEmpresaIdOrderByNombreAsc(empresaId); }
     public LocalDate hoy() { return LocalDate.now(clock); }
 
     public Compra ver(Long sedeId, Long id) {
@@ -109,7 +109,7 @@ public class CompraService {
         BigDecimal total = BigDecimal.ZERO;
         for (DetalleCompraForm item : form.getLineas()) {
             if (!usados.add(item.getProductoId())) throw new ReglaNegocioException("El producto está repetido; modifica su cantidad en la misma fila.");
-            Producto producto = productos.findById(item.getProductoId())
+            Producto producto = productos.findByIdAndEmpresaId(item.getProductoId(), sede.getEmpresa().getId())
                     .orElseThrow(() -> new ReglaNegocioException("Selecciona un producto del catálogo."));
             validarProducto(producto, item.getCantidad());
             DetalleCompra linea = new DetalleCompra();

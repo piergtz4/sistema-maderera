@@ -78,6 +78,7 @@ class SecurityIntegrationTests {
         crearUsuario(empresa, "consulta", "CONSULTA", sede, true);
         crearUsuario(empresa, "inactivo", "ADMINISTRADOR", sede, false);
         Categoria categoria = new Categoria();
+        categoria.setEmpresa(empresa);
         categoria.setCodigo("CAT-MAD");
         categoria.setNombre("Maderas");
         categoria = categorias.save(categoria);
@@ -86,6 +87,7 @@ class SecurityIntegrationTests {
         producto.setCodigo("MAD-001");
         producto.setNombre("Madera de prueba");
         producto.setCategoria(categoria);
+        producto.setEmpresa(empresa);
         producto.setUnidadMedida("UND");
 
         productoId = productos.save(producto).getId();

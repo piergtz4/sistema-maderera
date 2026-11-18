@@ -37,9 +37,10 @@ public class ProductoController {
     }
 
     @GetMapping("/productos")
-    public String listar(Model model) {
-        model.addAttribute("productos", productos.listarTodos());
-        model.addAttribute("sedesPorProducto", inventario.sedesRegistradasPorProducto());
+    public String listar(@AuthenticationPrincipal UsuarioPrincipal usuario, Model model) {
+        Long empresaId = usuario.getDatos().empresaId();
+        model.addAttribute("productos", productos.listarTodos(empresaId));
+        model.addAttribute("sedesPorProducto", inventario.sedesRegistradasPorProducto(empresaId));
         return "productos";
     }
 
@@ -50,7 +51,7 @@ public class ProductoController {
         form.setStockInicial(BigDecimal.ZERO);
         form.setStockMinimo(BigDecimal.ZERO);
         model.addAttribute("producto", form);
-        cargarCategorias(model, form);
+        cargarCategorias(usuario.getDatos().empresaId(), model, form);
         return "producto-form";
     }
 
@@ -62,7 +63,7 @@ public class ProductoController {
         ProductoForm form = registro.formularioEnSede(sede.get().getId(), id);
         model.addAttribute("producto", form);
         model.addAttribute("inventarioRegistrado", form.getInventarioVersion() != null);
-        cargarCategorias(model, form);
+        cargarCategorias(usuario.getDatos().empresaId(), model, form);
         return "producto-form";
     }
 
@@ -90,7 +91,7 @@ public class ProductoController {
             }
         }
         model.addAttribute("inventarioRegistrado", form.getInventarioVersion() != null);
-        cargarCategorias(model, form);
+        cargarCategorias(usuario.getDatos().empresaId(), model, form);
         return "producto-form";
     }
 
@@ -116,14 +117,15 @@ public class ProductoController {
     }
 
     @PostMapping("/productos/cambiar-estado/{id}")
-    public String cambiarEstado(@PathVariable Long id, RedirectAttributes flash) {
-        productos.cambiarEstado(id);
+    public String cambiarEstado(@PathVariable Long id, @AuthenticationPrincipal UsuarioPrincipal usuario,
+            RedirectAttributes flash) {
+        productos.cambiarEstado(usuario.getDatos().empresaId(), id);
         flash.addFlashAttribute("mensaje", "Estado del producto actualizado.");
         return "redirect:/productos";
     }
 
-    private void cargarCategorias(Model model, ProductoForm form) {
-        model.addAttribute("categorias", categorias.listarTodas().stream()
+    private void cargarCategorias(Long empresaId, Model model, ProductoForm form) {
+        model.addAttribute("categorias", categorias.listarTodas(empresaId).stream()
                 .filter(c -> c.getEstado() || c.getId().equals(form.getCategoriaId())).toList());
     }
 

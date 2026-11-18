@@ -128,6 +128,7 @@ class SedeIntegrationTests {
     void desactivarConservaInventarioEHistorialYBorraSeleccion() throws Exception {
         Sede ica = sede(empresa, "Sede Ica", "Ica");
         Categoria categoria = new Categoria();
+        categoria.setEmpresa(empresa);
         categoria.setCodigo("CAT-MAD");
         categoria.setNombre("Maderas");
         categoria = categorias.save(categoria);
@@ -135,6 +136,7 @@ class SedeIntegrationTests {
         producto.setCodigo("PRO-000001");
         producto.setNombre("Melamina");
         producto.setCategoria(categoria);
+        producto.setEmpresa(empresa);
         producto.setUnidadMedida("UND");
         producto = productos.save(producto);
         Inventario registro = new Inventario();

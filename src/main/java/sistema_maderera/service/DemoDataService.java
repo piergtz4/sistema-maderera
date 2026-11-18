@@ -56,11 +56,11 @@ public class DemoDataService {
         Usuario adminIca = usuario(empresa, "admin.ica", "Administrador Ica",
                 "ADMINISTRADOR", ica, password);
         usuario(empresa, "consulta", "Consulta Parcona", "CONSULTA", parcona, password);
-        Categoria maderas = categoria("CAT-MAD", "Maderas");
-        Categoria planchas = categoria("CAT-PLA", "Planchas");
-        Producto melamina = producto("Plancha de melamina blanca", planchas.getId(), "UND", "120", "150");
-        Producto tornillo = producto("Madera de tornillo", maderas.getId(), "P²", "8", "12");
-        Producto triplay = producto("Plancha de triplay", planchas.getId(), "UND", "60", "85");
+        Categoria maderas = categoria(empresa.getId(), "CAT-MAD", "Maderas");
+        Categoria planchas = categoria(empresa.getId(), "CAT-PLA", "Planchas");
+        Producto melamina = producto(empresa.getId(), "Plancha de melamina blanca", planchas.getId(), "UND", "120", "150");
+        Producto tornillo = producto(empresa.getId(), "Madera de tornillo", maderas.getId(), "P²", "8", "12");
+        Producto triplay = producto(empresa.getId(), "Plancha de triplay", planchas.getId(), "UND", "60", "85");
         existencia(parcona, admin, melamina, "20", "5");
         existencia(parcona, admin, tornillo, "3", "10");
         existencia(parcona, admin, triplay, "0", "4");
@@ -92,21 +92,21 @@ public class DemoDataService {
         return usuarios.save(usuario);
     }
 
-    private Categoria categoria(String codigo, String nombre) {
+    private Categoria categoria(Long empresaId, String codigo, String nombre) {
         CategoriaForm form = new CategoriaForm();
         form.setCodigo(codigo);
         form.setNombre(nombre);
-        return categoriaService.guardar(form);
+        return categoriaService.guardar(empresaId, form);
     }
 
-    private Producto producto(String nombre, Long categoriaId, String unidad, String compra, String venta) {
+    private Producto producto(Long empresaId, String nombre, Long categoriaId, String unidad, String compra, String venta) {
         ProductoForm form = new ProductoForm();
         form.setNombre(nombre);
         form.setCategoriaId(categoriaId);
         form.setUnidadMedida(unidad);
         form.setPrecioCompra(new BigDecimal(compra));
         form.setPrecioVenta(new BigDecimal(venta));
-        return productoService.guardar(form);
+        return productoService.guardar(empresaId, form);
     }
 
     private void existencia(Sede sede, Usuario usuario, Producto producto, String stock, String minimo) {

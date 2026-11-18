@@ -49,6 +49,7 @@ class InventarioIntegrationTests {
     @Autowired DemoDataService demo;
     @Autowired PasswordEncoder encoder;
     private Long parconaId;
+    private Long empresaId;
     private Long icaId;
     private Long adminId;
     private Long melaminaId;
@@ -63,13 +64,14 @@ class InventarioIntegrationTests {
         demo.inicializar("ClaveDePrueba1");
         Usuario admin = usuarios.findByUsuario("admin").orElseThrow();
         adminId = admin.getId();
+        empresaId = admin.getEmpresa().getId();
         parconaId = usuarios.findByUsuario("consulta").orElseThrow().getSede().getId();
         icaId = usuarios.findByUsuario("admin.ica").orElseThrow().getSede().getId();
         melaminaId = productos.findAll().stream().filter(p -> p.getNombre().contains("melamina")).findFirst().orElseThrow().getId();
         melaminaParconaId = item(parconaId, melaminaId);
         melaminaIcaId = item(icaId, melaminaId);
-        maderasId = categorias.findByCodigoIgnoreCase("CAT-MAD").orElseThrow().getId();
-        planchasId = categorias.findByCodigoIgnoreCase("CAT-PLA").orElseThrow().getId();
+        maderasId = categorias.findByEmpresaIdAndCodigoIgnoreCase(empresaId, "CAT-MAD").orElseThrow().getId();
+        planchasId = categorias.findByEmpresaIdAndCodigoIgnoreCase(empresaId, "CAT-PLA").orElseThrow().getId();
     }
 
     private void limpiar() {
@@ -259,19 +261,19 @@ class InventarioIntegrationTests {
         CategoriaForm form = new CategoriaForm();
         form.setCodigo("CODIGO-FALSIFICADO");
         form.setNombre("  Nueva   categoría  ");
-        Categoria creada = categoriaService.guardar(form);
+        Categoria creada = categoriaService.guardar(empresaId, form);
         assertThat(creada.getCodigo()).isEqualTo("CAT-NUE");
         assertThat(creada.getNombre()).isEqualTo("NUEVA CATEGORÍA");
-        assertThatThrownBy(() -> categoriaService.guardar(form)).isInstanceOf(ReglaNegocioException.class);
+        assertThatThrownBy(() -> categoriaService.guardar(empresaId, form)).isInstanceOf(ReglaNegocioException.class);
         form.setNombre("nueva categoría");
-        assertThatThrownBy(() -> categoriaService.guardar(form)).isInstanceOf(ReglaNegocioException.class);
+        assertThatThrownBy(() -> categoriaService.guardar(empresaId, form)).isInstanceOf(ReglaNegocioException.class);
         form.setNombre("Nuevos productos");
-        Categoria segunda = categoriaService.guardar(form);
+        Categoria segunda = categoriaService.guardar(empresaId, form);
         assertThat(segunda.getCodigo()).isEqualTo("CAT-NUE-2");
-        CategoriaForm editar = categoriaService.formulario(creada.getId());
+        CategoriaForm editar = categoriaService.formulario(empresaId, creada.getId());
         editar.setNombre("Herramientas");
         editar.setCodigo("CAMBIADO");
-        Categoria editada = categoriaService.guardar(editar);
+        Categoria editada = categoriaService.guardar(empresaId, editar);
         assertThat(editada.getCodigo()).isEqualTo("CAT-NUE");
         assertThat(editada.getNombre()).isEqualTo("HERRAMIENTAS");
         assertThat(categorias.count()).isEqualTo(4);
@@ -287,42 +289,42 @@ class InventarioIntegrationTests {
         mvc.perform(post("/categorias/guardar").session(sesion).with(csrf())
                 .param("nombre", "ferreteria").param("codigo", "CODIGO-MANUAL"))
                 .andExpect(redirectedUrl("/categorias"));
-        Categoria guardada = categorias.findByNombreIgnoreCase("FERRETERIA").orElseThrow();
+        Categoria guardada = categorias.findByEmpresaIdAndNombreIgnoreCase(empresaId, "FERRETERIA").orElseThrow();
         assertThat(guardada.getCodigo()).isEqualTo("CAT-FER");
         assertThat(guardada.getNombre()).isEqualTo("FERRETERIA");
     }
 
     @Test
     void codigosDeProductosSonGlobalesYSeConservanAlEditar() {
-        Producto primero = productoService.guardar(producto("Producto A", maderasId));
-        Producto segundo = productoService.guardar(producto("Producto B", planchasId));
+        Producto primero = productoService.guardar(empresaId, producto("Producto A", maderasId));
+        Producto segundo = productoService.guardar(empresaId, producto("Producto B", planchasId));
         assertThat(primero.getCodigo()).matches("PRO-\\d{6,}");
         assertThat(segundo.getCodigo()).isNotEqualTo(primero.getCodigo());
-        ProductoForm editar = productoService.formulario(primero.getId());
+        ProductoForm editar = productoService.formulario(empresaId, primero.getId());
         editar.setCodigo("CODIGO-FALSIFICADO");
         editar.setCategoriaId(planchasId);
-        assertThat(productoService.guardar(editar).getCodigo()).isEqualTo(primero.getCodigo());
+        assertThat(productoService.guardar(empresaId, editar).getCodigo()).isEqualTo(primero.getCodigo());
         assertThat(primero.getEstado()).isTrue();
         assertThat(inventarios.count()).isEqualTo(5);
     }
 
     @Test
     void productoActivoPuedeTenerStockCeroYNoCambiarUnidad() {
-        ProductoForm form = productoService.formulario(melaminaId);
+        ProductoForm form = productoService.formulario(empresaId, melaminaId);
         form.setUnidadMedida("KG");
-        assertThatThrownBy(() -> productoService.guardar(form)).isInstanceOf(ReglaNegocioException.class);
+        assertThatThrownBy(() -> productoService.guardar(empresaId, form)).isInstanceOf(ReglaNegocioException.class);
         inventario.mover(parconaId, adminId, movimiento(melaminaParconaId, TipoMovimiento.AJUSTE, "0"));
-        assertThat(productoService.buscar(melaminaId).getEstado()).isTrue();
+        assertThat(productoService.buscar(empresaId, melaminaId).getEstado()).isTrue();
         assertThat(stock(melaminaIcaId)).isEqualByComparingTo("8");
     }
 
     @Test
     void categoriaInactivaPermiteEditarSusProductosPeroNoAsignarNuevos() {
-        categoriaService.cambiarEstado(planchasId);
-        ProductoForm existente = productoService.formulario(melaminaId);
+        categoriaService.cambiarEstado(empresaId, planchasId);
+        ProductoForm existente = productoService.formulario(empresaId, melaminaId);
         existente.setNombre("Melamina editada");
-        assertThat(productoService.guardar(existente).getNombre()).isEqualTo("Melamina editada");
-        assertThatThrownBy(() -> productoService.guardar(producto("Nuevo", planchasId)))
+        assertThat(productoService.guardar(empresaId, existente).getNombre()).isEqualTo("Melamina editada");
+        assertThatThrownBy(() -> productoService.guardar(empresaId, producto("Nuevo", planchasId)))
                 .isInstanceOf(ReglaNegocioException.class);
     }
 
@@ -330,12 +332,12 @@ class InventarioIntegrationTests {
     void validaPreciosUnidadesYPrecisionAntesDePersistir() {
         ProductoForm form = producto("Producto inválido", maderasId);
         form.setPrecioCompra(new BigDecimal("-1"));
-        assertThatThrownBy(() -> productoService.guardar(form)).isInstanceOf(ReglaNegocioException.class);
+        assertThatThrownBy(() -> productoService.guardar(empresaId, form)).isInstanceOf(ReglaNegocioException.class);
         form.setPrecioCompra(new BigDecimal("1.001"));
-        assertThatThrownBy(() -> productoService.guardar(form)).isInstanceOf(ReglaNegocioException.class);
+        assertThatThrownBy(() -> productoService.guardar(empresaId, form)).isInstanceOf(ReglaNegocioException.class);
         form.setPrecioCompra(BigDecimal.ONE);
         form.setUnidadMedida("INVALIDA");
-        assertThatThrownBy(() -> productoService.guardar(form)).isInstanceOf(ReglaNegocioException.class);
+        assertThatThrownBy(() -> productoService.guardar(empresaId, form)).isInstanceOf(ReglaNegocioException.class);
         assertThat(productos.count()).isEqualTo(3);
     }
 
@@ -400,7 +402,7 @@ class InventarioIntegrationTests {
 
     @Test
     void catalogoIndicaSedesRegistradasAunqueElStockSeaCero() throws Exception {
-        Producto sinSede = productoService.guardar(producto("Producto pendiente", maderasId));
+        Producto sinSede = productoService.guardar(empresaId, producto("Producto pendiente", maderasId));
         MockHttpSession sesion = login("admin");
         mvc.perform(get("/productos").session(sesion)).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Sedes registradas")))
@@ -408,14 +410,14 @@ class InventarioIntegrationTests {
                 .andExpect(content().string(containsString("Producto pendiente")))
                 .andExpect(content().string(containsString("Sin sedes")))
                 .andExpect(content().string(not(containsString("<th>Estado</th>"))));
-        productoService.cambiarEstado(sinSede.getId());
+        productoService.cambiarEstado(empresaId, sinSede.getId());
         mvc.perform(get("/productos").session(sesion)).andExpect(status().isOk())
                 .andExpect(content().string(containsString("class=\"badge inactive product-status\">Inactivo</span>")));
     }
 
     @Test
     void editarProductoAntiguoRegistraInventarioYAjustaSinDuplicarMovimientos() throws Exception {
-        Producto clavo = productoService.guardar(producto("Clavo de 1 pulgada", maderasId));
+        Producto clavo = productoService.guardar(empresaId, producto("Clavo de 1 pulgada", maderasId));
         MockHttpSession sesion = login("admin");
         mvc.perform(get("/productos/editar/" + clavo.getId()).session(sesion))
                 .andExpect(status().isOk()).andExpect(model().attribute("inventarioRegistrado", false))
@@ -469,7 +471,7 @@ class InventarioIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("El inventario cambió mientras editabas")));
         assertThat(stock(creado.getId())).isEqualByComparingTo("40");
-        assertThat(productoService.buscar(clavo.getId()).getNombre()).isEqualTo(clavo.getNombre());
+        assertThat(productoService.buscar(empresaId, clavo.getId()).getNombre()).isEqualTo(clavo.getNombre());
     }
 
     @Test
@@ -592,7 +594,7 @@ class InventarioIntegrationTests {
 
     @Test
     void productoInactivoNoAdmiteMovimientosNiNuevosRegistros() {
-        productoService.cambiarEstado(melaminaId);
+        productoService.cambiarEstado(empresaId, melaminaId);
         assertThatThrownBy(() -> inventario.mover(parconaId, adminId,
                 movimiento(melaminaParconaId, TipoMovimiento.ENTRADA, "1"))).isInstanceOf(ReglaNegocioException.class);
         RegistroInventarioForm form = new RegistroInventarioForm();
@@ -646,7 +648,7 @@ class InventarioIntegrationTests {
                 .param("precioCompra", "120").param("precioVenta", "150").param("estado", "true")
                 .param("stock", "9999").param("sedeId", icaId.toString())).andExpect(redirectedUrl("/productos"));
         assertThat(stock(melaminaParconaId)).isEqualByComparingTo("20");
-        assertThat(productoService.buscar(melaminaId).getCodigo()).startsWith("PRO-");
+        assertThat(productoService.buscar(empresaId, melaminaId).getCodigo()).startsWith("PRO-");
     }
 
     @Test

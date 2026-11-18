@@ -11,28 +11,31 @@ import sistema_maderera.entity.Categoria;
 import sistema_maderera.exception.RecursoNoEncontradoException;
 import sistema_maderera.exception.ReglaNegocioException;
 import sistema_maderera.repository.CategoriaRepository;
+import sistema_maderera.repository.EmpresaRepository;
 
 @Service
 @Transactional(readOnly = true)
 public class CategoriaService {
     private final CategoriaRepository categorias;
+    private final EmpresaRepository empresas;
     private final ValidacionService validacion;
 
-    public CategoriaService(CategoriaRepository categorias, ValidacionService validacion) {
+    public CategoriaService(CategoriaRepository categorias, EmpresaRepository empresas, ValidacionService validacion) {
         this.categorias = categorias;
+        this.empresas = empresas;
         this.validacion = validacion;
     }
 
-    public List<Categoria> listarTodas() { return categorias.findAllByOrderByNombreAsc(); }
-    public List<Categoria> listarActivas() { return categorias.findByEstadoTrueOrderByNombreAsc(); }
+    public List<Categoria> listarTodas(Long empresaId) { return categorias.findByEmpresaIdOrderByNombreAsc(empresaId); }
+    public List<Categoria> listarActivas(Long empresaId) { return categorias.findByEmpresaIdAndEstadoTrueOrderByNombreAsc(empresaId); }
 
-    public Categoria buscar(Long id) {
-        return categorias.findById(id)
+    public Categoria buscar(Long empresaId, Long id) {
+        return categorias.findByIdAndEmpresaId(id, empresaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Categoría no encontrada."));
     }
 
-    public CategoriaForm formulario(Long id) {
-        Categoria categoria = buscar(id);
+    public CategoriaForm formulario(Long empresaId, Long id) {
+        Categoria categoria = buscar(empresaId, id);
         CategoriaForm form = new CategoriaForm();
         form.setId(categoria.getId());
         form.setCodigo(categoria.getCodigo());
@@ -43,35 +46,39 @@ public class CategoriaService {
     }
 
     @Transactional
-    public Categoria guardar(CategoriaForm form) {
+    public Categoria guardar(Long empresaId, CategoriaForm form) {
         validacion.validar(form);
         String nombre = form.getNombre().trim().replaceAll("\\s+", " ").toUpperCase(Locale.ROOT);
-        if (categorias.findByNombreIgnoreCase(nombre)
+        if (categorias.findByEmpresaIdAndNombreIgnoreCase(empresaId, nombre)
                 .filter(c -> !Objects.equals(c.getId(), form.getId())).isPresent()) {
             throw new ReglaNegocioException("Ya existe una categoría con ese nombre.");
         }
-        Categoria categoria = form.getId() == null ? new Categoria() : buscar(form.getId());
-        if (categoria.getId() == null) categoria.setCodigo(generarCodigo(nombre));
+        Categoria categoria = form.getId() == null ? new Categoria() : buscar(empresaId, form.getId());
+        if (categoria.getId() == null) {
+            categoria.setEmpresa(empresas.findById(empresaId)
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada.")));
+            categoria.setCodigo(generarCodigo(empresaId, nombre));
+        }
         categoria.setNombre(nombre);
         categoria.setDescripcion(form.getDescripcion() == null ? "" : form.getDescripcion().trim());
         categoria.setEstado(form.getEstado());
         return categorias.save(categoria);
     }
 
-    private String generarCodigo(String nombre) {
+    private String generarCodigo(Long empresaId, String nombre) {
         String letras = Normalizer.normalize(nombre, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "").replaceAll("[^A-Z0-9]", "");
         if (letras.isEmpty()) throw new ReglaNegocioException("El nombre debe contener letras o números.");
         String base = "CAT-" + letras.substring(0, Math.min(3, letras.length()));
         String codigo = base;
         int numero = 2;
-        while (categorias.findByCodigoIgnoreCase(codigo).isPresent()) codigo = base + "-" + numero++;
+        while (categorias.findByEmpresaIdAndCodigoIgnoreCase(empresaId, codigo).isPresent()) codigo = base + "-" + numero++;
         return codigo;
     }
 
     @Transactional
-    public void cambiarEstado(Long id) {
-        Categoria categoria = buscar(id);
+    public void cambiarEstado(Long empresaId, Long id) {
+        Categoria categoria = buscar(empresaId, id);
         categoria.setEstado(!categoria.getEstado());
         categorias.save(categoria);
     }

@@ -3,13 +3,18 @@ package sistema_maderera.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 @Entity
-@Table(name = "productos")
+@Table(name = "productos", uniqueConstraints =
+    @UniqueConstraint(name = "uq_producto_empresa_codigo", columnNames = {"empresa_id", "codigo"}))
 public class Producto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 30)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id", nullable = false)
+    private Empresa empresa;
+
+    @Column(nullable = false, length = 30)
     private String codigo;
 
     @Column(nullable = false, length = 150)
@@ -33,6 +38,8 @@ public class Producto {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Empresa getEmpresa() { return empresa; }
+    public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
 
     public String getCodigo() { return codigo; }
     public void setCodigo(String codigo) { this.codigo = codigo; }

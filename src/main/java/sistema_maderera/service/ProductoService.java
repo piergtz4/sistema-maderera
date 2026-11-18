@@ -23,15 +23,15 @@ public class ProductoService {
         this.validacion = validacion;
     }
 
-    public List<Producto> listarTodos() { return productos.findAllByOrderByNombreAsc(); }
+    public List<Producto> listarTodos(Long empresaId) { return productos.findByEmpresaIdOrderByNombreAsc(empresaId); }
 
-    public Producto buscar(Long id) {
-        return productos.findById(id)
+    public Producto buscar(Long empresaId, Long id) {
+        return productos.findByIdAndEmpresaId(id, empresaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado."));
     }
 
-    public ProductoForm formulario(Long id) {
-        Producto producto = buscar(id);
+    public ProductoForm formulario(Long empresaId, Long id) {
+        Producto producto = buscar(empresaId, id);
         ProductoForm form = new ProductoForm();
         form.setId(producto.getId());
         form.setCodigo(producto.getCodigo());
@@ -45,11 +45,11 @@ public class ProductoService {
     }
 
     @Transactional
-    public Producto guardar(ProductoForm form) {
+    public Producto guardar(Long empresaId, ProductoForm form) {
         validacion.validar(form);
         boolean nuevo = form.getId() == null;
-        Producto producto = nuevo ? new Producto() : buscar(form.getId());
-        var categoria = categorias.buscar(form.getCategoriaId());
+        Producto producto = nuevo ? new Producto() : buscar(empresaId, form.getId());
+        var categoria = categorias.buscar(empresaId, form.getCategoriaId());
         if (!categoria.getEstado() && (nuevo || !producto.getCategoria().getId().equals(categoria.getId()))) {
             throw new ReglaNegocioException("Seleccione una categoría activa.");
         }
@@ -57,6 +57,7 @@ public class ProductoService {
             throw new ReglaNegocioException("La unidad de un producto existente no puede cambiarse.");
         }
         producto.setNombre(form.getNombre().trim().replaceAll("\\s+", " "));
+        producto.setEmpresa(categoria.getEmpresa());
         producto.setCategoria(categoria);
         producto.setUnidadMedida(form.getUnidadMedida());
         producto.setPrecioCompra(form.getPrecioCompra());
@@ -72,8 +73,8 @@ public class ProductoService {
     }
 
     @Transactional
-    public void cambiarEstado(Long id) {
-        Producto producto = buscar(id);
+    public void cambiarEstado(Long empresaId, Long id) {
+        Producto producto = buscar(empresaId, id);
         producto.setEstado(!producto.getEstado());
         productos.save(producto);
     }

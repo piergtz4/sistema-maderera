@@ -118,7 +118,7 @@ public class CompraController {
             form.getLineas().add(new DetalleCompraForm());
         }
         model.addAttribute("proveedores", proveedores.listar(usuario.getDatos().empresaId()));
-        model.addAttribute("productos", compras.productosDisponibles());
+        model.addAttribute("productos", compras.productosDisponibles(usuario.getDatos().empresaId()));
         model.addAttribute("tipos", TipoComprobanteCompra.values());
         model.addAttribute("hoy", compras.hoy());
         return "compra-form";

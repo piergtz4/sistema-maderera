@@ -153,6 +153,7 @@ class ComprasIntegrationTests {
         Producto nuevo = new Producto();
         nuevo.setCodigo("PRO-COMPRA"); nuevo.setNombre("Clavos de prueba"); nuevo.setUnidadMedida("KG");
         nuevo.setCategoria(categorias.findAll().getFirst());
+        nuevo.setEmpresa(nuevo.getCategoria().getEmpresa());
         nuevo = productos.save(nuevo);
         var form = compra("F001-3");
         form.getLineas().clear();

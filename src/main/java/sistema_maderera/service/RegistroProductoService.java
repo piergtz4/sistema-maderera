@@ -10,9 +10,14 @@ import sistema_maderera.dto.RegistroInventarioForm;
 import sistema_maderera.dto.StockMinimoForm;
 import sistema_maderera.entity.Inventario;
 import sistema_maderera.entity.Producto;
+import sistema_maderera.entity.Sede;
+import sistema_maderera.entity.Usuario;
 import sistema_maderera.entity.TipoMovimiento;
 import sistema_maderera.exception.ReglaNegocioException;
+import sistema_maderera.exception.RecursoNoEncontradoException;
 import sistema_maderera.repository.InventarioRepository;
+import sistema_maderera.repository.SedeRepository;
+import sistema_maderera.repository.UsuarioRepository;
 
 /**
  * Registra productos y sus existencias en una sede.
@@ -24,18 +29,24 @@ public class RegistroProductoService {
     private final InventarioService inventarios;
     private final InventarioRepository inventarioRepository;
     private final ValidacionService validacion;
+    private final SedeRepository sedes;
+    private final UsuarioRepository usuarios;
 
     public RegistroProductoService(ProductoService productos, InventarioService inventarios,
-            InventarioRepository inventarioRepository, ValidacionService validacion) {
+            InventarioRepository inventarioRepository, ValidacionService validacion,
+            SedeRepository sedes, UsuarioRepository usuarios) {
         this.productos = productos;
         this.inventarios = inventarios;
         this.inventarioRepository = inventarioRepository;
         this.validacion = validacion;
+        this.sedes = sedes;
+        this.usuarios = usuarios;
     }
 
     @Transactional(readOnly = true)
     public ProductoForm formularioEnSede(Long sedeId, Long productoId) {
-        ProductoForm form = productos.formulario(productoId);
+        Long empresaId = sedeActiva(sedeId).getEmpresa().getId();
+        ProductoForm form = productos.formulario(empresaId, productoId);
         Inventario inventario = inventarioRepository.findByProductoIdAndSedeId(productoId, sedeId).orElse(null);
         form.setStockInicial(inventario == null ? BigDecimal.ZERO : inventario.getStock());
         form.setStockMinimo(inventario == null ? BigDecimal.ZERO : inventario.getStockMinimo());
@@ -61,7 +72,8 @@ public class RegistroProductoService {
         if (form.getStockInicial() == null || form.getStockMinimo() == null) {
             throw new ReglaNegocioException("Ingresa el stock actual y el stock mínimo de esta sede.");
         }
-        Producto producto = productos.guardar(form);
+        Long empresaId = empresaAutorizada(sedeId, usuarioId);
+        Producto producto = productos.guardar(empresaId, form);
         registrar(sedeId, usuarioId, producto.getId(), form.getStockInicial(), form.getStockMinimo());
         return producto;
     }
@@ -69,20 +81,22 @@ public class RegistroProductoService {
     public void actualizarEnSede(Long sedeId, Long usuarioId, ProductoForm form) {
         validacion.validar(form);
         if (form.getId() == null) throw new ReglaNegocioException("Selecciona un producto existente.");
-        productos.guardar(form);
+        Long empresaId = empresaAutorizada(sedeId, usuarioId);
+        productos.guardar(empresaId, form);
         if (form.getStockInicial() != null || form.getStockMinimo() != null) {
-            actualizarInventario(sedeId, usuarioId, form.getId(), form.getStockInicial(),
+            actualizarInventario(empresaId, sedeId, usuarioId, form.getId(), form.getStockInicial(),
                     form.getStockMinimo(), form.getInventarioVersion());
         }
     }
 
     public void actualizarSoloInventario(Long sedeId, Long usuarioId, Long productoId, ProductoForm form) {
-        productos.buscar(productoId);
-        actualizarInventario(sedeId, usuarioId, productoId, form.getStockInicial(),
+        Long empresaId = empresaAutorizada(sedeId, usuarioId);
+        productos.buscar(empresaId, productoId);
+        actualizarInventario(empresaId, sedeId, usuarioId, productoId, form.getStockInicial(),
                 form.getStockMinimo(), form.getInventarioVersion());
     }
 
-    private void actualizarInventario(Long sedeId, Long usuarioId, Long productoId,
+    private void actualizarInventario(Long empresaId, Long sedeId, Long usuarioId, Long productoId,
             BigDecimal stockActual, BigDecimal stockMinimo, Long version) {
         RegistroInventarioForm datos = new RegistroInventarioForm();
         datos.setProductoId(productoId);
@@ -94,7 +108,7 @@ public class RegistroProductoService {
             throw new ReglaNegocioException("El inventario cambió mientras editabas. Vuelve a abrir el producto.");
         }
         if (registro == null) {
-            if (!productos.buscar(productoId).getEstado()
+            if (!productos.buscar(empresaId, productoId).getEstado()
                     && stockActual.signum() == 0 && stockMinimo.signum() == 0) return;
             registrar(sedeId, usuarioId, productoId, stockActual, stockMinimo);
             return;
@@ -112,6 +126,29 @@ public class RegistroProductoService {
             ajuste.setMotivo("Ajuste desde la edición del producto");
             inventarios.mover(sedeId, usuarioId, ajuste);
         }
+    }
+
+    private Sede sedeActiva(Long sedeId) {
+        Sede sede = sedes.findById(sedeId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Sede no encontrada."));
+        if (!Boolean.TRUE.equals(sede.getEstado()) || !Boolean.TRUE.equals(sede.getEmpresa().getEstado())) {
+            throw new ReglaNegocioException("La sede o la empresa está inactiva.");
+        }
+        return sede;
+    }
+
+    private Long empresaAutorizada(Long sedeId, Long usuarioId) {
+        Sede sede = sedeActiva(sedeId);
+        Usuario usuario = usuarios.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));
+        boolean general = "ADMINISTRADOR_GENERAL".equals(usuario.getRol());
+        boolean local = "ADMINISTRADOR".equals(usuario.getRol()) && usuario.getSede() != null
+                && usuario.getSede().getId().equals(sedeId);
+        if (!Boolean.TRUE.equals(usuario.getEstado())
+                || !usuario.getEmpresa().getId().equals(sede.getEmpresa().getId()) || !(general || local)) {
+            throw new ReglaNegocioException("El usuario no puede operar en esta sede.");
+        }
+        return sede.getEmpresa().getId();
     }
 
     private Inventario registrar(Long sedeId, Long usuarioId, Long productoId,
