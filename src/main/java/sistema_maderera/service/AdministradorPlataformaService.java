@@ -42,12 +42,13 @@ public class AdministradorPlataformaService {
 
         String password = form.getPassword();
 
-        if (password.getBytes(StandardCharsets.UTF_8).length > 72
-                || password.codePoints().noneMatch(Character::isLetter)
+        if (password.codePoints().noneMatch(Character::isLetter)
                 || password.codePoints().noneMatch(Character::isDigit)) {
             throw new ReglaNegocioException(
-                    "La contraseña debe incluir letras y números "
-                    + "y no superar 72 bytes.");
+                    "La contraseña debe incluir letras y números.");
+        }
+        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new ReglaNegocioException("La contraseña es demasiado larga. Usa una más corta.");
         }
 
         AdministradorPlataforma administrador = new AdministradorPlataforma();

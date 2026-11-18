@@ -60,7 +60,7 @@ public class UsuarioGestionService {
         Empresa empresa = empresas.bloquearParaUsuarios(empresaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
         Usuario usuario = form.getId() == null ? new Usuario() : buscar(empresaId, form.getId());
-        boolean cuentaPropia = Objects.equals(usuario.getId(), actorId);
+        boolean cuentaPropia = usuario.getId() != null && Objects.equals(usuario.getId(), actorId);
         if (cuentaPropia && (form.getPassword() != null && !form.getPassword().isEmpty()
                 || form.getConfirmarPassword() != null && !form.getConfirmarPassword().isEmpty())) {
             throw new ReglaNegocioException("Para cambiar tu contraseña, usa Mi cuenta e ingresa la contraseña actual.");
@@ -159,10 +159,12 @@ public class UsuarioGestionService {
 
     private void validarClave(String password, String confirmacion) {
         if (password == null || password.length() < 12
-                || password.getBytes(StandardCharsets.UTF_8).length > 72
                 || password.codePoints().noneMatch(Character::isLetter)
                 || password.codePoints().noneMatch(Character::isDigit)) {
-            throw new ReglaNegocioException("La contraseña debe tener al menos 12 caracteres, incluir letras y números, y no superar 72 bytes.");
+            throw new ReglaNegocioException("La contraseña debe tener al menos 12 caracteres e incluir letras y números.");
+        }
+        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new ReglaNegocioException("La contraseña es demasiado larga. Usa una más corta.");
         }
         if (!password.equals(confirmacion)) {
             throw new ReglaNegocioException("Las contraseñas no coinciden.");

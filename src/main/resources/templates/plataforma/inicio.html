@@ -27,13 +27,17 @@
     </header>
 
     <main class="contenido">
+        <p th:if="${mensaje}" th:text="${mensaje}" class="aviso exito" role="status"></p>
         <section class="tarjeta">
             <div class="titulo">
                 <h1>Empresas</h1>
-                <span>
-                    Total:
-                    <strong th:text="${#lists.size(empresas)}">0</strong>
-                </span>
+                <div class="acciones">
+                    <span>
+                        Total:
+                        <strong th:text="${#lists.size(empresas)}">0</strong>
+                    </span>
+                    <a class="boton principal" th:href="@{/plataforma/empresas/nueva}">Registrar empresa</a>
+                </div>
             </div>
 
             <div class="tabla-contenedor">

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADERPRO | Registrar empresa</title>
+    <link rel="stylesheet" th:href="@{/css/plataforma.css}">
+</head>
+<body>
+    <header class="encabezado">
+        <div class="barra">
+            <div class="marca">
+                <img th:src="@{/img/LogoPro.png}" alt="Logo MADERPRO">
+                <div>
+                    <strong>MADER<span>PRO</span></strong>
+                    <p>Administración de plataforma</p>
+                </div>
+            </div>
+            <div class="cuenta">
+                <span th:text="${nombreAdministrador}">Administrador</span>
+                <form th:action="@{/plataforma/logout}" method="post">
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            </div>
+        </div>
+    </header>
+    <main class="contenido formulario-contenedor">
+        <section class="tarjeta">
+            <div class="titulo">
+                <h1>Registrar empresa</h1>
+                <a class="enlace" th:href="@{/plataforma}">Volver a empresas</a>
+            </div>
+            <form class="formulario" th:action="@{/plataforma/empresas}" th:object="${alta}" method="post">
+                <p class="ayuda">Registra la empresa, su primera sede y la cuenta de su administrador general. Los campos con * son obligatorios.</p>
+                <div class="aviso error" role="alert" th:if="${#fields.hasAnyErrors()}">
+                    <p>No se pudo registrar la empresa. Revisa los datos e ingresa nuevamente las contraseñas.</p>
+                    <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                </div>
+                <fieldset>
+                    <legend>Datos de la empresa</legend>
+                    <div class="campos">
+                        <div class="campo"><label for="nombreComercial">Nombre comercial *</label>
+                            <input id="nombreComercial" th:field="*{empresa.nombreComercial}" maxlength="100" required></div>
+                        <div class="campo"><label for="razonSocial">Razón social</label>
+                            <input id="razonSocial" th:field="*{empresa.razonSocial}" maxlength="150"></div>
+                        <div class="campo"><label for="ruc">RUC *</label>
+                            <input id="ruc" th:field="*{empresa.ruc}" inputmode="numeric" pattern="[0-9]{11}" maxlength="11" required></div>
+                        <div class="campo"><label for="email">Correo de contacto</label>
+                            <input id="email" type="email" th:field="*{empresa.email}" maxlength="150"></div>
+                        <div class="campo"><label for="telefono">Teléfono de contacto</label>
+                            <input id="telefono" type="tel" th:field="*{empresa.telefono}" maxlength="30"></div>
+                        <div class="campo"><label for="direccion">Dirección de la empresa</label>
+                            <input id="direccion" th:field="*{empresa.direccion}" maxlength="255"></div>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Primera sede</legend>
+                    <div class="campos">
+                        <div class="campo"><label for="nombreSede">Nombre de la sede *</label>
+                            <input id="nombreSede" th:field="*{sede.nombre}" maxlength="100" required></div>
+                        <div class="campo"><label for="departamento">Departamento *</label>
+                            <input id="departamento" th:field="*{sede.departamento}" maxlength="100" required></div>
+                        <div class="campo"><label for="provincia">Provincia *</label>
+                            <input id="provincia" th:field="*{sede.provincia}" maxlength="100" required></div>
+                        <div class="campo"><label for="distrito">Distrito *</label>
+                            <input id="distrito" th:field="*{sede.distrito}" maxlength="100" required></div>
+                        <div class="campo"><label for="direccionSede">Dirección de la sede</label>
+                            <input id="direccionSede" th:field="*{sede.direccion}" maxlength="255"></div>
+                        <div class="campo"><label for="telefonoSede">Teléfono de la sede</label>
+                            <input id="telefonoSede" type="tel" th:field="*{sede.telefono}" maxlength="20"></div>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Administrador de la empresa</legend>
+                    <p class="ayuda">Esta cuenta administrará únicamente su empresa. Entrega sus credenciales al responsable para que pueda ingresar al sistema.</p>
+                    <div class="campos">
+                        <div class="campo"><label for="nombreAdministrador">Nombre completo *</label>
+                            <input id="nombreAdministrador" th:field="*{nombreAdministrador}" maxlength="100" required></div>
+                        <div class="campo"><label for="usuario">Usuario *</label>
+                            <input id="usuario" th:field="*{usuario}" maxlength="50" pattern="[A-Za-z0-9._-]+" autocomplete="off" autocapitalize="none" spellcheck="false" required></div>
+                        <div class="campo"><label for="password">Contraseña *</label>
+                            <input id="password" name="password" type="password" minlength="12" maxlength="72" autocomplete="new-password" aria-describedby="ayuda-clave" required></div>
+                        <div class="campo"><label for="confirmarPassword">Confirmar contraseña *</label>
+                            <input id="confirmarPassword" name="confirmarPassword" type="password" minlength="12" maxlength="72" autocomplete="new-password" required></div>
+                    </div>
+                    <p id="ayuda-clave" class="ayuda">Mínimo 12 caracteres, con letras y números.</p>
+                </fieldset>
+                <div class="acciones pie-formulario">
+                    <a class="boton secundario" th:href="@{/plataforma}">Cancelar</a>
+                    <button class="principal" type="submit">Registrar empresa</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

@@ -69,7 +69,7 @@ button:hover {
     background: #574130;
 }
 
-button:focus-visible {
+button:focus-visible, a:focus-visible, input:focus-visible {
     outline: 3px solid #f48325;
     outline-offset: 3px;
 }
@@ -154,4 +154,128 @@ tbody tr:hover {
     text-align: center;
     padding: 32px;
     color: #74675c;
+}
+
+.acciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.boton {
+    display: inline-block;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.principal {
+    background: #a84408;
+    border-color: #a84408;
+    color: #ffffff;
+}
+
+.principal:hover {
+    background: #863506;
+}
+
+.secundario {
+    border-color: #ae8b6e;
+    color: #35281f;
+}
+
+.secundario:hover {
+    background: #eee4d7;
+}
+
+.enlace {
+    color: #823909;
+}
+
+.aviso {
+    padding: 16px 20px;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+}
+
+.exito {
+    background: #e4f2e8;
+    color: #23633b;
+}
+
+.error {
+    background: #fbe8e5;
+    color: #7e2822;
+}
+
+.error p {
+    margin-top: 0;
+}
+
+.error ul {
+    margin-bottom: 0;
+}
+
+.formulario-contenedor {
+    max-width: 1000px;
+}
+
+.formulario {
+    padding: 24px;
+}
+
+.ayuda {
+    color: #66574b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+fieldset {
+    min-width: 0;
+    margin: 24px 0;
+    padding: 20px;
+    border: 1px solid #dfd5ca;
+    border-radius: 8px;
+}
+
+legend {
+    padding: 0 8px;
+    font-weight: bold;
+}
+
+.campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.campo label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.campo input {
+    width: 100%;
+    min-width: 0;
+    padding: 11px;
+    border: 1px solid #aa998b;
+    border-radius: 6px;
+    font: inherit;
+    color: #35281f;
+    background: #ffffff;
+}
+
+.pie-formulario {
+    justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+    .contenido { padding: 0 12px; }
+    .formulario { padding: 16px; }
+    fieldset { padding: 16px 12px; }
+    .campos { grid-template-columns: 1fr; }
 }
