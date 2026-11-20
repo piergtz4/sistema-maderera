@@ -6,10 +6,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import sistema_maderera.entity.Empresa;
+import sistema_maderera.dto.EmpresaForm;
 import sistema_maderera.dto.PlataformaEmpresaForm;
 import sistema_maderera.dto.SedeForm;
 import sistema_maderera.dto.UsuarioForm;
 import sistema_maderera.exception.ReglaNegocioException;
+import sistema_maderera.exception.RecursoNoEncontradoException;
 import sistema_maderera.repository.EmpresaRepository;
 
 @Service
@@ -33,24 +35,48 @@ public class PlataformaEmpresaService {
         return empresas.findAllByOrderByNombreComercialAsc();
     }
 
+    public List<Empresa> listar(Boolean activas) {
+        return activas == null ? listar() : empresas.findByEstadoOrderByNombreComercialAsc(activas);
+    }
+
+    public EmpresaForm formulario(Long id) {
+        Empresa empresa = buscar(id);
+        EmpresaForm form = new EmpresaForm();
+        form.setNombreComercial(empresa.getNombreComercial());
+        form.setRazonSocial(empresa.getRazonSocial());
+        form.setRuc(empresa.getRuc());
+        form.setEmail(empresa.getEmail());
+        form.setTelefono(empresa.getTelefono());
+        form.setDireccion(empresa.getDireccion());
+        return form;
+    }
+
+    @Transactional
+    public Empresa editar(Long id, EmpresaForm form) {
+        validacion.validar(form);
+        Empresa empresa = bloquear(id);
+        validarRuc(form.getRuc(), id);
+        aplicarDatos(empresa, form);
+        return empresas.saveAndFlush(empresa);
+    }
+
+    @Transactional
+    public void cambiarEstado(Long id, boolean activo) {
+        Empresa empresa = bloquear(id);
+        if (Boolean.TRUE.equals(empresa.getEstado()) != activo) {
+            empresa.setEstado(activo);
+            empresa.setVersionAcceso(empresa.getVersionAcceso() + 1);
+        }
+    }
+
     @Transactional
     public Empresa crear(PlataformaEmpresaForm form) {
         validacion.validar(form);
         var datos = form.getEmpresa();
-        if (datos.getRuc() == null || datos.getRuc().isBlank()) {
-            throw new ReglaNegocioException("RUC: Campo obligatorio para registrar una empresa.");
-        }
-        if (empresas.existsByRuc(datos.getRuc())) {
-            throw new ReglaNegocioException("Ese RUC ya pertenece a una empresa registrada.");
-        }
+        validarRuc(datos.getRuc(), null);
 
         Empresa empresa = new Empresa();
-        empresa.setNombreComercial(limpiar(datos.getNombreComercial()));
-        empresa.setRazonSocial(limpiar(datos.getRazonSocial()));
-        empresa.setRuc(datos.getRuc());
-        empresa.setEmail(limpiar(datos.getEmail()));
-        empresa.setTelefono(limpiar(datos.getTelefono()));
-        empresa.setDireccion(limpiar(datos.getDireccion()));
+        aplicarDatos(empresa, datos);
         empresas.saveAndFlush(empresa);
 
         SedeForm sede = new SedeForm();
@@ -71,6 +97,34 @@ public class PlataformaEmpresaService {
         administrador.setRol("ADMINISTRADOR_GENERAL");
         usuarios.guardar(empresa.getId(), null, administrador);
         return empresa;
+    }
+
+    private Empresa buscar(Long id) {
+        return empresas.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
+    }
+
+    private Empresa bloquear(Long id) {
+        return empresas.bloquearParaUsuarios(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
+    }
+
+    private void validarRuc(String ruc, Long id) {
+        if (ruc == null || ruc.isBlank()) {
+            throw new ReglaNegocioException("RUC: Campo obligatorio.");
+        }
+        if (id == null ? empresas.existsByRuc(ruc) : empresas.existsByRucAndIdNot(ruc, id)) {
+            throw new ReglaNegocioException("Ese RUC ya pertenece a una empresa registrada.");
+        }
+    }
+
+    private void aplicarDatos(Empresa empresa, EmpresaForm form) {
+        empresa.setNombreComercial(limpiar(form.getNombreComercial()));
+        empresa.setRazonSocial(limpiar(form.getRazonSocial()));
+        empresa.setRuc(form.getRuc());
+        empresa.setEmail(limpiar(form.getEmail()));
+        empresa.setTelefono(limpiar(form.getTelefono()));
+        empresa.setDireccion(limpiar(form.getDireccion()));
     }
 
     private String limpiar(String valor) {

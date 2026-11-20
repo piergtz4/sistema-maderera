@@ -39,6 +39,9 @@ public class Empresa {
     @Column(nullable = false)
     private Boolean estado = true;
 
+    @Column(name = "version_acceso", nullable = false)
+    private Long versionAcceso = 0L;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNombreComercial() { return nombreComercial; }
@@ -59,4 +62,6 @@ public class Empresa {
     public void setLogoTipo(String logoTipo) { this.logoTipo = logoTipo; }
     public Boolean getEstado() { return estado; }
     public void setEstado(Boolean estado) { this.estado = estado; }
+    public Long getVersionAcceso() { return versionAcceso; }
+    public void setVersionAcceso(Long versionAcceso) { this.versionAcceso = versionAcceso; }
 }

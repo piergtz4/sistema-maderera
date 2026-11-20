@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADERPRO | Editar empresa</title>
+    <link rel="stylesheet" th:href="@{/css/plataforma.css}">
+</head>
+<body>
+    <header class="encabezado">
+        <div class="barra">
+            <div class="marca">
+                <img th:src="@{/img/LogoPro.png}" alt="Logo MADERPRO">
+                <div>
+                    <strong>MADER<span>PRO</span></strong>
+                    <p>Administración de plataforma</p>
+                </div>
+            </div>
+            <div class="cuenta">
+                <span th:text="${nombreAdministrador}">Administrador</span>
+                <form th:action="@{/plataforma/logout}" method="post">
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            </div>
+        </div>
+    </header>
+    <main class="contenido formulario-contenedor">
+        <section class="tarjeta">
+            <div class="titulo">
+                <h1>Editar empresa</h1>
+                <a class="enlace" th:href="@{/plataforma(estado='todas')}">Volver a empresas</a>
+            </div>
+            <form class="formulario" th:action="@{/plataforma/empresas/{id}(id=${empresaId})}"
+                  th:object="${empresa}" method="post">
+                <p class="ayuda">Actualiza los datos de la empresa. Los campos con * son obligatorios.</p>
+                <div class="aviso error" role="alert" th:if="${#fields.hasAnyErrors()}">
+                    <p>No se pudieron guardar los cambios. Revisa los datos.</p>
+                    <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                </div>
+                <div class="campos">
+                    <div class="campo"><label for="nombreComercial">Nombre comercial *</label>
+                        <input id="nombreComercial" th:field="*{nombreComercial}" maxlength="100" required></div>
+                    <div class="campo"><label for="razonSocial">Razón social</label>
+                        <input id="razonSocial" th:field="*{razonSocial}" maxlength="150"></div>
+                    <div class="campo"><label for="ruc">RUC *</label>
+                        <input id="ruc" th:field="*{ruc}" inputmode="numeric" pattern="[0-9]{11}" maxlength="11" required></div>
+                    <div class="campo"><label for="email">Correo de contacto</label>
+                        <input id="email" type="email" th:field="*{email}" maxlength="150"></div>
+                    <div class="campo"><label for="telefono">Teléfono de contacto</label>
+                        <input id="telefono" type="tel" th:field="*{telefono}" maxlength="30"></div>
+                    <div class="campo"><label for="direccion">Dirección de la empresa</label>
+                        <input id="direccion" th:field="*{direccion}" maxlength="255"></div>
+                </div>
+                <div class="acciones pie-formulario separacion">
+                    <a class="boton secundario" th:href="@{/plataforma(estado='todas')}">Cancelar</a>
+                    <button class="principal" type="submit">Guardar cambios</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

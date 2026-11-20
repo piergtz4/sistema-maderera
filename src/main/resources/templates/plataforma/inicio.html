@@ -33,13 +33,25 @@
                 <h1>Empresas</h1>
                 <div class="acciones">
                     <span>
-                        Total:
+                        Resultados:
                         <strong th:text="${#lists.size(empresas)}">0</strong>
                     </span>
                     <a class="boton principal" th:href="@{/plataforma/empresas/nueva}">Registrar empresa</a>
                 </div>
             </div>
 
+            <nav class="filtros" aria-label="Filtrar empresas por estado">
+                <a th:href="@{/plataforma(estado='activas')}"
+                   th:classappend="${estado == 'activas' ? 'seleccionado' : ''}"
+                   th:attr="aria-current=${estado == 'activas' ? 'page' : null}">Activas</a>
+                <a th:href="@{/plataforma(estado='suspendidas')}"
+                   th:classappend="${estado == 'suspendidas' ? 'seleccionado' : ''}"
+                   th:attr="aria-current=${estado == 'suspendidas' ? 'page' : null}">Suspendidas</a>
+                <a th:href="@{/plataforma(estado='todas')}"
+                   th:classappend="${estado == 'todas' ? 'seleccionado' : ''}"
+                   th:attr="aria-current=${estado == 'todas' ? 'page' : null}">Todas</a>
+            </nav>
+            <p class="ayuda ayuda-listado">Suspender una empresa bloquea el acceso de sus usuarios y conserva su información.</p>
             <div class="tabla-contenedor">
                 <table aria-label="Empresas registradas">
                     <thead>
@@ -49,6 +61,7 @@
                             <th scope="col">Correo</th>
                             <th scope="col">Teléfono</th>
                             <th scope="col">Estado</th>
+                            <th scope="col">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -64,15 +77,26 @@
                             <td>
                                 <span class="estado"
                                       th:classappend="${empresa.estado ? 'activa' : 'inactiva'}"
-                                      th:text="${empresa.estado ? 'Activa' : 'Inactiva'}">
+                                      th:text="${empresa.estado ? 'Activa' : 'Suspendida'}">
                                     Activa
                                 </span>
+                            </td>
+                            <td>
+                                <div class="acciones-fila">
+                                    <a class="boton secundario" th:href="@{/plataforma/empresas/{id}/editar(id=${empresa.id})}">Editar</a>
+                                    <form th:action="@{/plataforma/empresas/{id}/estado(id=${empresa.id})}" method="post">
+                                        <input type="hidden" name="activo" th:value="${!empresa.estado}">
+                                        <button type="submit" class="secundario"
+                                                th:attr="aria-label=${(empresa.estado ? 'Suspender ' : 'Reactivar ') + empresa.nombreComercial}"
+                                                th:text="${empresa.estado ? 'Suspender' : 'Reactivar'}">Suspender</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
 
                         <tr th:if="${#lists.isEmpty(empresas)}">
-                            <td colspan="5" class="vacio">
-                                No hay empresas registradas.
+                            <td colspan="6" class="vacio">
+                                No hay empresas para el estado seleccionado.
                             </td>
                         </tr>
                     </tbody>

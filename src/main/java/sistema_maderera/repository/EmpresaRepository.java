@@ -21,4 +21,6 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
     Optional<Empresa> bloquearParaUsuarios(Long id);
     List<Empresa> findAllByOrderByNombreComercialAsc();
     boolean existsByRuc(String ruc);
+    boolean existsByRucAndIdNot(String ruc, Long id);
+    List<Empresa> findByEstadoOrderByNombreComercialAsc(boolean estado);
 }

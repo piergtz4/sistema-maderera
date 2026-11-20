@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import sistema_maderera.dto.PlataformaEmpresaForm;
+import sistema_maderera.dto.EmpresaForm;
 import sistema_maderera.exception.ReglaNegocioException;
 import sistema_maderera.security.AdministradorPlataformaPrincipal;
 import sistema_maderera.service.PlataformaEmpresaService;
@@ -33,6 +36,52 @@ public class PlataformaEmpresaController {
                 "empresa.email", "empresa.telefono", "empresa.direccion", "sede.nombre",
                 "sede.departamento", "sede.provincia", "sede.distrito", "sede.direccion",
                 "sede.telefono", "nombreAdministrador", "usuario", "password", "confirmarPassword");
+    }
+
+    @InitBinder("empresa")
+    public void camposDeEdicion(WebDataBinder binder) {
+        binder.setAllowedFields("nombreComercial", "razonSocial", "ruc", "email", "telefono", "direccion");
+    }
+
+    @GetMapping("/{id}/editar")
+    public String editar(@AuthenticationPrincipal AdministradorPlataformaPrincipal administrador,
+            @PathVariable Long id, Model model) {
+        model.addAttribute("empresa", empresas.formulario(id));
+        cargarEdicion(administrador, id, model);
+        return "plataforma/empresa-editar";
+    }
+
+    @PostMapping("/{id}")
+    public String guardar(@AuthenticationPrincipal AdministradorPlataformaPrincipal administrador,
+            @PathVariable Long id, @Valid @ModelAttribute("empresa") EmpresaForm form,
+            BindingResult errores, Model model, RedirectAttributes flash) {
+        if (!errores.hasErrors()) {
+            try {
+                empresas.editar(id, form);
+                flash.addFlashAttribute("mensaje", "Datos de la empresa actualizados correctamente.");
+                return "redirect:/plataforma?estado=todas";
+            } catch (ReglaNegocioException e) {
+                errores.reject("negocio", e.getMessage());
+            } catch (DataIntegrityViolationException e) {
+                errores.reject("duplicado", "Ese RUC ya pertenece a una empresa registrada.");
+            }
+        }
+        cargarEdicion(administrador, id, model);
+        return "plataforma/empresa-editar";
+    }
+
+    @PostMapping("/{id}/estado")
+    public String cambiarEstado(@PathVariable Long id, @RequestParam boolean activo, RedirectAttributes flash) {
+        empresas.cambiarEstado(id, activo);
+        flash.addFlashAttribute("mensaje", activo
+                ? "Empresa reactivada. Sus usuarios pueden volver a iniciar sesión."
+                : "Empresa suspendida. Sus usuarios ya no pueden acceder al sistema.");
+        return "redirect:/plataforma?estado=" + (activo ? "activas" : "suspendidas");
+    }
+
+    private void cargarEdicion(AdministradorPlataformaPrincipal administrador, Long id, Model model) {
+        model.addAttribute("nombreAdministrador", administrador.getNombre());
+        model.addAttribute("empresaId", id);
     }
 
     @GetMapping("/nueva")
