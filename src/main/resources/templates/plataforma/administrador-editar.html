@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADERPRO | Editar administrador</title>
+    <link rel="stylesheet" th:href="@{/css/plataforma.css}">
+</head>
+<body>
+    <header class="encabezado">
+        <div class="barra">
+            <div class="marca">
+                <img th:src="@{/img/LogoPro.png}" alt="Logo MADERPRO">
+                <div><strong>MADER<span>PRO</span></strong><p>Administración de plataforma</p></div>
+            </div>
+            <div class="cuenta">
+                <span th:text="${nombreAdministrador}">Administrador</span>
+                <form th:action="@{/plataforma/logout}" method="post"><button type="submit">Cerrar sesión</button></form>
+            </div>
+        </div>
+    </header>
+    <main class="contenido formulario-contenedor">
+        <section class="tarjeta">
+            <div class="titulo"><h1>Editar administrador</h1><span th:text="${nombreEmpresa}"></span></div>
+            <form class="formulario" th:action="@{/plataforma/empresas/{empresaId}/administradores/{id}(empresaId=${empresaId},id=${administradorId})}"
+                  th:object="${cuenta}" method="post">
+                <p class="ayuda">Actualiza el nombre y el usuario. Después del cambio, esta cuenta deberá iniciar sesión nuevamente.</p>
+                <div class="aviso error" role="alert" th:if="${#fields.hasAnyErrors()}">
+                    <p>No se pudieron guardar los cambios. Revisa los datos.</p>
+                    <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                </div>
+                <div class="campos">
+                    <div class="campo"><label for="nombre">Nombre completo *</label>
+                        <input id="nombre" th:field="*{nombre}" maxlength="100" required></div>
+                    <div class="campo"><label for="usuario">Usuario *</label>
+                        <input id="usuario" th:field="*{usuario}" maxlength="50" pattern="[A-Za-z0-9._-]+" autocomplete="off" autocapitalize="none" spellcheck="false" required></div>
+                </div>
+                <div class="acciones pie-formulario separacion">
+                    <a class="boton secundario" th:href="@{/plataforma/empresas/{id}(id=${empresaId})} + '#administradores'">Cancelar</a>
+                    <button class="principal" type="submit">Guardar cambios</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

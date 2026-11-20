@@ -43,6 +43,7 @@ public class UsuarioService implements UserDetailsService {
                 && Objects.equals(usuario.getRol(), datos.rol())
                 && Objects.equals(usuario.getEmpresa().getId(), datos.empresaId())
                 && Objects.equals(usuario.getEmpresa().getVersionAcceso(), datos.versionAccesoEmpresa())
+                && Objects.equals(usuario.getVersionAcceso(), datos.versionAccesoUsuario())
                 && Objects.equals(sedeId, datos.sedeId())
                 && Objects.equals(UsuarioPrincipal.huellaClave(usuario.getPassword()), datos.huellaClave());
     }

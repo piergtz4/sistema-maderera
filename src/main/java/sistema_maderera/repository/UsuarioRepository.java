@@ -25,6 +25,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     long countByEmpresaIdAndRolAndEstadoTrue(Long empresaId, String rol);
 
+    List<Usuario> findByEmpresaIdAndRolOrderByNombreAsc(Long empresaId, String rol);
+
+    Optional<Usuario> findByIdAndEmpresaIdAndRol(Long id, Long empresaId, String rol);
+
     @Query("select u from Usuario u join fetch u.empresa left join fetch u.sede where u.id = :id")
     Optional<Usuario> buscarSesion(Long id);
 }

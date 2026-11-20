@@ -1,6 +1,5 @@
 package sistema_maderera.service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,15 +17,17 @@ public class AdministradorPlataformaService {
     private final AdministradorPlataformaRepository administradores;
     private final PasswordEncoder encoder;
     private final ValidacionService validacion;
+    private final PoliticaContrasenaService contrasenas;
 
     public AdministradorPlataformaService(
             AdministradorPlataformaRepository administradores,
             PasswordEncoder encoder,
-            ValidacionService validacion) {
+            ValidacionService validacion, PoliticaContrasenaService contrasenas) {
 
         this.administradores = administradores;
         this.encoder = encoder;
         this.validacion = validacion;
+        this.contrasenas = contrasenas;
     }
 
     @Transactional
@@ -42,14 +43,7 @@ public class AdministradorPlataformaService {
 
         String password = form.getPassword();
 
-        if (password.codePoints().noneMatch(Character::isLetter)
-                || password.codePoints().noneMatch(Character::isDigit)) {
-            throw new ReglaNegocioException(
-                    "La contraseña debe incluir letras y números.");
-        }
-        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
-            throw new ReglaNegocioException("La contraseña es demasiado larga. Usa una más corta.");
-        }
+        contrasenas.validar(password);
 
         AdministradorPlataforma administrador = new AdministradorPlataforma();
         administrador.setNombre(form.getNombre().trim());

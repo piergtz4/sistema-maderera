@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADERPRO | Restablecer contraseña</title>
+    <link rel="stylesheet" th:href="@{/css/plataforma.css}">
+</head>
+<body>
+    <header class="encabezado">
+        <div class="barra">
+            <div class="marca">
+                <img th:src="@{/img/LogoPro.png}" alt="Logo MADERPRO">
+                <div><strong>MADER<span>PRO</span></strong><p>Administración de plataforma</p></div>
+            </div>
+            <div class="cuenta">
+                <span th:text="${nombreAdministrador}">Administrador</span>
+                <form th:action="@{/plataforma/logout}" method="post"><button type="submit">Cerrar sesión</button></form>
+            </div>
+        </div>
+    </header>
+    <main class="contenido formulario-contenedor">
+        <section class="tarjeta">
+            <div class="titulo"><h1>Restablecer contraseña</h1><span th:text="${nombreEmpresa}"></span></div>
+            <form class="formulario" th:action="@{/plataforma/empresas/{empresaId}/administradores/{id}/clave(empresaId=${empresaId},id=${administradorId})}"
+                  th:object="${clave}" method="post">
+                <p>Cuenta: <strong th:text="${cuenta.nombre}"></strong> (<span th:text="${cuenta.usuario}"></span>).</p>
+                <p class="ayuda">Define la nueva contraseña y confirma el cambio con tu contraseña de plataforma. La cuenta deberá volver a iniciar sesión.</p>
+                <div class="aviso error" role="alert" th:if="${#fields.hasAnyErrors()}">
+                    <p>No se pudo restablecer la contraseña. Revisa los datos e ingresa nuevamente las contraseñas.</p>
+                    <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                </div>
+                <div class="campos">
+                    <div class="campo"><label for="nueva">Nueva contraseña *</label>
+                        <input id="nueva" name="nueva" type="password" minlength="12" maxlength="72" autocomplete="new-password" aria-describedby="ayuda-clave" required></div>
+                    <div class="campo"><label for="confirmacion">Confirmar nueva contraseña *</label>
+                        <input id="confirmacion" name="confirmacion" type="password" minlength="12" maxlength="72" autocomplete="new-password" required></div>
+                    <div class="campo"><label for="clavePlataforma">Tu contraseña de plataforma *</label>
+                        <input id="clavePlataforma" name="clavePlataforma" type="password" maxlength="72" autocomplete="current-password" required></div>
+                </div>
+                <p id="ayuda-clave" class="ayuda">Mínimo 12 caracteres, con letras y números.</p>
+                <div class="acciones pie-formulario separacion">
+                    <a class="boton secundario" th:href="@{/plataforma/empresas/{id}(id=${empresaId})} + '#administradores'">Cancelar</a>
+                    <button class="principal" type="submit">Restablecer contraseña</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

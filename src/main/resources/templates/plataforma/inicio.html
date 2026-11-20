@@ -83,6 +83,7 @@
                             </td>
                             <td>
                                 <div class="acciones-fila">
+                                    <a class="boton principal" th:href="@{/plataforma/empresas/{id}(id=${empresa.id})}">Administrar</a>
                                     <a class="boton secundario" th:href="@{/plataforma/empresas/{id}/editar(id=${empresa.id})}">Editar</a>
                                     <form th:action="@{/plataforma/empresas/{id}/estado(id=${empresa.id})}" method="post">
                                         <input type="hidden" name="activo" th:value="${!empresa.estado}">

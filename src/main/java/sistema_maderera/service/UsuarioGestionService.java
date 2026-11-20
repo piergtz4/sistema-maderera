@@ -1,6 +1,5 @@
 package sistema_maderera.service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -29,14 +28,17 @@ public class UsuarioGestionService {
     private final EmpresaRepository empresas;
     private final PasswordEncoder encoder;
     private final ValidacionService validacion;
+    private final PoliticaContrasenaService contrasenas;
 
     public UsuarioGestionService(UsuarioRepository usuarios, SedeRepository sedes,
-            EmpresaRepository empresas, PasswordEncoder encoder, ValidacionService validacion) {
+            EmpresaRepository empresas, PasswordEncoder encoder, ValidacionService validacion,
+            PoliticaContrasenaService contrasenas) {
         this.usuarios = usuarios;
         this.sedes = sedes;
         this.empresas = empresas;
         this.encoder = encoder;
         this.validacion = validacion;
+        this.contrasenas = contrasenas;
     }
 
     public List<Usuario> listar(Long empresaId) {
@@ -82,7 +84,7 @@ public class UsuarioGestionService {
         Sede sede = resolverSede(empresaId, form.getRol(), form.getSedeId());
         String password = form.getPassword();
         if (usuario.getId() == null || password != null && !password.isEmpty()) {
-            validarClave(password, form.getConfirmarPassword());
+            contrasenas.validar(password, form.getConfirmarPassword());
             if (usuario.getId() != null) {
                 Usuario administrador = buscar(empresaId, actorId);
                 String claveAdministrador = form.getClaveAdministrador();
@@ -122,6 +124,7 @@ public class UsuarioGestionService {
             throw new ReglaNegocioException("Asigna una sede activa antes de activar esta cuenta.");
         }
         usuario.setEstado(activo);
+        usuario.setVersionAcceso(usuario.getVersionAcceso() + 1);
         usuarios.save(usuario);
         return activo;
     }
@@ -134,7 +137,7 @@ public class UsuarioGestionService {
         if (!encoder.matches(form.getActual(), usuario.getPassword())) {
             throw new ReglaNegocioException("La contraseña actual no es correcta.");
         }
-        validarClave(form.getNueva(), form.getConfirmacion());
+        contrasenas.validar(form.getNueva(), form.getConfirmacion());
         if (encoder.matches(form.getNueva(), usuario.getPassword())) {
             throw new ReglaNegocioException("La nueva contraseña debe ser diferente de la actual.");
         }
@@ -157,17 +160,4 @@ public class UsuarioGestionService {
                 .orElseThrow(() -> new ReglaNegocioException("Selecciona una sede activa de tu empresa."));
     }
 
-    private void validarClave(String password, String confirmacion) {
-        if (password == null || password.length() < 12
-                || password.codePoints().noneMatch(Character::isLetter)
-                || password.codePoints().noneMatch(Character::isDigit)) {
-            throw new ReglaNegocioException("La contraseña debe tener al menos 12 caracteres e incluir letras y números.");
-        }
-        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
-            throw new ReglaNegocioException("La contraseña es demasiado larga. Usa una más corta.");
-        }
-        if (!password.equals(confirmacion)) {
-            throw new ReglaNegocioException("Las contraseñas no coinciden.");
-        }
-    }
 }

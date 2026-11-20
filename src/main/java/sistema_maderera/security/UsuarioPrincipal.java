@@ -25,7 +25,7 @@ public class UsuarioPrincipal extends User {
         Sede sede = usuario.getSede();
         datos = new DatosUsuario(usuario.getId(), usuario.getNombre(), usuario.getRol(),
                 usuario.getEmpresa().getId(), sede == null ? null : sede.getId(),
-                huellaClave(usuario.getPassword()), usuario.getEmpresa().getVersionAcceso());
+                huellaClave(usuario.getPassword()), usuario.getEmpresa().getVersionAcceso(), usuario.getVersionAcceso());
     }
 
     public DatosUsuario getDatos() {
@@ -42,7 +42,7 @@ public class UsuarioPrincipal extends User {
     }
 
     public record DatosUsuario(Long usuarioId, String nombre, String rol, Long empresaId, Long sedeId,
-            String huellaClave, Long versionAccesoEmpresa)
+            String huellaClave, Long versionAccesoEmpresa, Long versionAccesoUsuario)
             implements Serializable {
     }
 }

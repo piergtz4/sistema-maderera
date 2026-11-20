@@ -1,0 +1,2 @@
+ALTER TABLE usuarios
+    ADD COLUMN version_acceso BIGINT NOT NULL DEFAULT 0;
