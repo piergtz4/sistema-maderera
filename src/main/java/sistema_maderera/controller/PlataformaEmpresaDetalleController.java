@@ -16,6 +16,7 @@ import sistema_maderera.security.AdministradorPlataformaPrincipal;
 import sistema_maderera.service.EmpresaService;
 import sistema_maderera.service.PlataformaAdministradorEmpresaService;
 import sistema_maderera.service.SedeService;
+import sistema_maderera.service.PlanEmpresaService;
 
 @Controller
 @RequestMapping("/plataforma/empresas/{empresaId}")
@@ -23,12 +24,14 @@ public class PlataformaEmpresaDetalleController {
     private final EmpresaService empresas;
     private final SedeService sedes;
     private final PlataformaAdministradorEmpresaService administradores;
+    private final PlanEmpresaService planes;
 
     public PlataformaEmpresaDetalleController(EmpresaService empresas, SedeService sedes,
-            PlataformaAdministradorEmpresaService administradores) {
+            PlataformaAdministradorEmpresaService administradores, PlanEmpresaService planes) {
         this.empresas = empresas;
         this.sedes = sedes;
         this.administradores = administradores;
+        this.planes = planes;
     }
 
     @InitBinder("cuenta")
@@ -46,6 +49,7 @@ public class PlataformaEmpresaDetalleController {
             @PathVariable Long empresaId, Model model) {
         model.addAttribute("nombreAdministrador", actor.getNombre());
         model.addAttribute("empresa", empresas.buscar(empresaId));
+        model.addAttribute("planEmpresa", planes.resumen(empresaId));
         model.addAttribute("sedes", sedes.listar(empresaId));
         model.addAttribute("usuariosEmpresa", administradores.listarUsuarios(empresaId));
         var cuentas = administradores.listar(empresaId);

@@ -69,7 +69,7 @@ button:hover {
     background: #574130;
 }
 
-button:focus-visible, a:focus-visible, input:focus-visible {
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
     outline: 3px solid #f48325;
     outline-offset: 3px;
 }
@@ -258,7 +258,7 @@ legend {
     font-size: 14px;
 }
 
-.campo input {
+.campo input, .campo select {
     width: 100%;
     min-width: 0;
     padding: 11px;
@@ -358,6 +358,10 @@ legend {
 .datos-empresa .dato-ancho { grid-column: 1 / -1; }
 button:disabled { opacity: 0.55; cursor: not-allowed; }
 button:disabled:hover { background: transparent; }
+
+.resumen-plan { border: 1px solid #dfd5ca; border-radius: 8px; background: #faf6f0; }
+.resumen-plan h2 { margin: 20px 24px 0; font-size: 18px; }
+.importe-plan { font-size: 22px; font-weight: bold; color: #823909; }
 
 @media (max-width: 600px) {
     .contenido { padding: 0 12px; }

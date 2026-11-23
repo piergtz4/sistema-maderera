@@ -39,6 +39,7 @@
         </section>
         <div class="pestanas-empresa" role="tablist" aria-label="Secciones de la empresa" hidden>
             <button type="button" role="tab" id="pestana-empresa" aria-controls="panel-empresa" aria-selected="true" data-pestana="empresa">Empresa</button>
+            <button type="button" role="tab" id="pestana-plan" aria-controls="panel-plan" aria-selected="false" tabindex="-1" data-pestana="plan">Plan</button>
             <button type="button" role="tab" id="pestana-administradores" aria-controls="panel-administradores" aria-selected="false" tabindex="-1" data-pestana="administradores">Administradores</button>
             <button type="button" role="tab" id="pestana-usuarios" aria-controls="panel-usuarios" aria-selected="false" tabindex="-1" data-pestana="usuarios">Usuarios</button>
             <button type="button" role="tab" id="pestana-sedes" aria-controls="panel-sedes" aria-selected="false" tabindex="-1" data-pestana="sedes">Sedes</button>
@@ -51,6 +52,25 @@
                 <div><dt>Correo de contacto</dt><dd th:text="${#strings.isEmpty(empresa.email) ? '—' : empresa.email}"></dd></div>
                 <div><dt>Teléfono</dt><dd th:text="${#strings.isEmpty(empresa.telefono) ? '—' : empresa.telefono}"></dd></div>
                 <div class="dato-ancho"><dt>Dirección</dt><dd th:text="${#strings.isEmpty(empresa.direccion) ? '—' : empresa.direccion}"></dd></div>
+            </dl>
+        </section>
+        <section class="tarjeta panel-pestana" id="panel-plan" role="tabpanel" aria-labelledby="pestana-plan" tabindex="0">
+            <div class="titulo">
+                <h2>Plan de la empresa</h2>
+                <a class="boton principal" th:href="@{/plataforma/empresas/{id}/plan(id=${empresa.id})}"
+                   th:text="${planEmpresa == null ? 'Asignar plan' : 'Configurar plan'}">Configurar plan</a>
+            </div>
+            <p th:if="${planEmpresa == null}" class="ayuda ayuda-listado">Esta empresa todavía no tiene un plan asignado.</p>
+            <dl th:if="${planEmpresa != null}" class="datos-empresa">
+                <div><dt>Plan</dt><dd th:text="${planEmpresa.plan.nombre}"></dd></div>
+                <div><dt>Modalidad de pago</dt><dd th:text="${planEmpresa.periodicidad.nombre}"></dd></div>
+                <div><dt>Sedes activas contratadas</dt><dd th:text="${planEmpresa.sedesTotales}"></dd></div>
+                <div><dt>Cuentas activas contratadas</dt><dd th:text="${planEmpresa.usuariosTotales}"></dd></div>
+                <div><dt>Sedes adicionales</dt><dd th:text="${planEmpresa.sedesAdicionales}"></dd></div>
+                <div><dt>Cuentas adicionales</dt><dd th:text="${planEmpresa.usuariosAdicionales}"></dd></div>
+                <div><dt>Ventas confirmadas al mes</dt><dd th:text="${planEmpresa.plan.ventasMensuales}"></dd></div>
+                <div><dt>Total mensual</dt><dd>S/ <span th:text="${planEmpresa.totalMensual}"></span></dd></div>
+                <div><dt th:text="${planEmpresa.periodicidad.name() == 'ANUAL' ? 'Total anual' : 'Total del mes'}"></dt><dd class="importe-plan">S/ <span th:text="${planEmpresa.totalPeriodo}"></span></dd></div>
             </dl>
         </section>
         <section class="tarjeta panel-pestana" id="panel-administradores" role="tabpanel" aria-labelledby="pestana-administradores" tabindex="0">

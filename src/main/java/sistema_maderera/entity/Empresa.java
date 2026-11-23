@@ -42,6 +42,25 @@ public class Empresa {
     @Column(name = "version_acceso", nullable = false)
     private Long versionAcceso = 0L;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "plan_comercial", length = 20)
+    private PlanComercial planComercial;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "periodicidad_plan", nullable = false, length = 10)
+    private PeriodicidadPlan periodicidadPlan = PeriodicidadPlan.MENSUAL;
+
+    @Column(name = "sedes_adicionales", nullable = false)
+    private Integer sedesAdicionales = 0;
+
+    @Column(name = "usuarios_adicionales", nullable = false)
+    private Integer usuariosAdicionales = 0;
+
+    @Column(name = "version_plan", nullable = false)
+    private Long versionPlan = 0L;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNombreComercial() { return nombreComercial; }
@@ -64,4 +83,14 @@ public class Empresa {
     public void setEstado(Boolean estado) { this.estado = estado; }
     public Long getVersionAcceso() { return versionAcceso; }
     public void setVersionAcceso(Long versionAcceso) { this.versionAcceso = versionAcceso; }
+    public PlanComercial getPlanComercial() { return planComercial; }
+    public void setPlanComercial(PlanComercial planComercial) { this.planComercial = planComercial; }
+    public PeriodicidadPlan getPeriodicidadPlan() { return periodicidadPlan; }
+    public void setPeriodicidadPlan(PeriodicidadPlan periodicidadPlan) { this.periodicidadPlan = periodicidadPlan; }
+    public Integer getSedesAdicionales() { return sedesAdicionales; }
+    public void setSedesAdicionales(Integer sedesAdicionales) { this.sedesAdicionales = sedesAdicionales; }
+    public Integer getUsuariosAdicionales() { return usuariosAdicionales; }
+    public void setUsuariosAdicionales(Integer usuariosAdicionales) { this.usuariosAdicionales = usuariosAdicionales; }
+    public Long getVersionPlan() { return versionPlan; }
+    public void setVersionPlan(Long versionPlan) { this.versionPlan = versionPlan; }
 }

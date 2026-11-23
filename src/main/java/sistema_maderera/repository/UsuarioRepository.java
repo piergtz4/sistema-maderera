@@ -24,6 +24,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     List<Usuario> findByEmpresaIdAndSedeIdAndEstadoTrue(Long empresaId, Long sedeId);
 
     long countByEmpresaIdAndRolAndEstadoTrue(Long empresaId, String rol);
+    long countByEmpresaIdAndEstadoTrue(Long empresaId);
 
     List<Usuario> findByEmpresaIdAndRolOrderByNombreAsc(Long empresaId, String rol);
 

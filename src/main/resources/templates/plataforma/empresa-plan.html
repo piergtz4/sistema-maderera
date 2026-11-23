@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADERPRO | Configurar plan</title>
+    <link rel="stylesheet" th:href="@{/css/plataforma.css}">
+    <script defer th:src="@{/js/plataforma-plan.js}"></script>
+</head>
+<body>
+    <header class="encabezado">
+        <div class="barra">
+            <div class="marca">
+                <img th:src="@{/img/LogoPro.png}" alt="Logo MADERPRO">
+                <div><strong>MADER<span>PRO</span></strong><p>Administración de plataforma</p></div>
+            </div>
+            <div class="cuenta">
+                <span th:text="${nombreAdministrador}">Administrador</span>
+                <form th:action="@{/plataforma/logout}" method="post"><button type="submit">Cerrar sesión</button></form>
+            </div>
+        </div>
+    </header>
+    <main class="contenido formulario-contenedor">
+        <section class="tarjeta">
+            <div class="titulo">
+                <div><h1>Configurar plan</h1><p class="ayuda" th:text="${empresa.nombreComercial}"></p></div>
+                <a class="enlace" th:href="@{/plataforma/empresas/{id}(id=${empresa.id})} + '#plan'">Volver a empresa</a>
+            </div>
+            <form id="formularioPlan" class="formulario" th:object="${contrato}" method="post"
+                  th:action="@{/plataforma/empresas/{id}/plan(id=${empresa.id})}"
+                  th:attr="data-precio-sede=${precioSede},data-precio-usuario=${precioUsuario}">
+                <input type="hidden" th:field="*{version}">
+                <div class="aviso error" role="alert" th:if="${#fields.hasAnyErrors()}">
+                    <p>No se pudo guardar el plan. Revisa los datos.</p>
+                    <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
+                </div>
+                <div class="campos">
+                    <div class="campo"><label for="plan">Plan</label>
+                        <select id="plan" th:field="*{plan}" required>
+                            <option th:each="opcion : ${planes}" th:value="${opcion}" th:text="${opcion.nombre}"
+                                    th:attr="data-precio=${opcion.precioMensual},data-sedes=${opcion.sedes},data-usuarios=${opcion.usuarios},data-ventas=${opcion.ventasMensuales}"></option>
+                        </select>
+                    </div>
+                    <div class="campo"><label for="periodicidad">Modalidad de pago</label>
+                        <select id="periodicidad" th:field="*{periodicidad}" required>
+                            <option th:each="opcion : ${periodicidades}" th:value="${opcion}" th:text="${opcion.nombre}"
+                                    th:attr="data-meses=${opcion.meses}"></option>
+                        </select>
+                    </div>
+                    <div class="campo"><label for="sedesAdicionales">Sedes adicionales</label>
+                        <input id="sedesAdicionales" th:field="*{sedesAdicionales}" type="number" min="0" step="1" required aria-describedby="ayudaSedes">
+                        <p id="ayudaSedes" class="ayuda">S/ <span th:text="${precioSede}"></span> al mes por cada sede adicional.</p>
+                    </div>
+                    <div class="campo"><label for="usuariosAdicionales">Cuentas adicionales</label>
+                        <input id="usuariosAdicionales" th:field="*{usuariosAdicionales}" type="number" min="0" step="1" required aria-describedby="ayudaCuentas">
+                        <p id="ayudaCuentas" class="ayuda">S/ <span th:text="${precioUsuario}"></span> al mes por cada cuenta adicional.</p>
+                    </div>
+                </div>
+                <div class="tabla-contenedor separacion">
+                    <table aria-label="Planes disponibles">
+                        <thead><tr><th>Plan</th><th>Sedes incluidas</th><th>Cuentas incluidas</th><th>Ventas al mes</th><th>Precio mensual</th></tr></thead>
+                        <tbody><tr th:each="opcion : ${planes}">
+                            <td th:text="${opcion.nombre}"></td><td th:text="${opcion.sedes}"></td><td th:text="${opcion.usuarios}"></td>
+                            <td th:text="${opcion.ventasMensuales}"></td><td>S/ <span th:text="${opcion.precioMensual}"></span></td>
+                        </tr></tbody>
+                    </table>
+                </div>
+                <div id="resumenPlan" class="resumen-plan separacion" aria-live="polite" hidden>
+                    <h2>Resumen de la contratación</h2>
+                    <dl class="datos-empresa">
+                        <div><dt>Sedes activas contratadas</dt><dd id="totalSedes"></dd></div>
+                        <div><dt>Cuentas activas contratadas</dt><dd id="totalUsuarios"></dd></div>
+                        <div><dt>Ventas confirmadas al mes</dt><dd id="totalVentas"></dd></div>
+                        <div><dt>Plan base al mes</dt><dd id="importeBase"></dd></div>
+                        <div><dt>Sedes adicionales al mes</dt><dd id="importeSedes"></dd></div>
+                        <div><dt>Cuentas adicionales al mes</dt><dd id="importeUsuarios"></dd></div>
+                        <div><dt>Total mensual</dt><dd id="totalMensual"></dd></div>
+                        <div><dt id="etiquetaPeriodo">Total del período</dt><dd id="totalPeriodo" class="importe-plan"></dd></div>
+                    </dl>
+                </div>
+                <p class="ayuda">El pago anual corresponde a 12 mensualidades, incluidos los adicionales, sin descuento. El cupo de ventas se renueva cada mes y se comparte entre todas las sedes; las cotizaciones y los borradores no lo consumen.</p>
+                <p class="ayuda">Guardar esta configuración no registra un pago ni realiza un cobro.</p>
+                <div class="acciones pie-formulario separacion">
+                    <a class="boton secundario" th:href="@{/plataforma/empresas/{id}(id=${empresa.id})} + '#plan'">Cancelar</a>
+                    <button class="principal" type="submit">Guardar plan</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
