@@ -54,6 +54,33 @@ public class PlanEmpresaService {
         return empresa.getPlanComercial() == null ? null : calcular(formulario(empresaId));
     }
 
+    public UsoPlan uso(Long empresaId) {
+        buscar(empresaId);
+        return new UsoPlan(sedes.countByEmpresaIdAndEstadoTrue(empresaId),
+                usuarios.countByEmpresaIdAndEstadoTrue(empresaId));
+    }
+
+    // Se comprueba dentro de la operación que ya mantiene bloqueada la empresa.
+    public void validarCupoSede(Empresa empresa) {
+        if (empresa.getPlanComercial() == null) return;
+        long limite = (long) empresa.getPlanComercial().getSedes() + empresa.getSedesAdicionales();
+        if (sedes.activasParaCupo(empresa.getId()).size() >= limite) {
+            throw new ReglaNegocioException("Tu plan permite hasta " + limite
+                    + (limite == 1 ? " sede activa" : " sedes activas")
+                    + " y ya alcanzaste ese límite. Solicita ampliar tu plan o contratar sedes adicionales.");
+        }
+    }
+
+    // Todas las cuentas activas de la empresa consumen cupo, incluido el administrador general.
+    public void validarCupoUsuario(Empresa empresa) {
+        if (empresa.getPlanComercial() == null) return;
+        long limite = (long) empresa.getPlanComercial().getUsuarios() + empresa.getUsuariosAdicionales();
+        if (usuarios.activosParaCupo(empresa.getId()).size() >= limite) {
+            throw new ReglaNegocioException("Tu plan permite hasta " + limite
+                    + " cuentas activas y ya alcanzaste ese límite. Desactiva una cuenta que no utilices o solicita cuentas adicionales.");
+        }
+    }
+
     // Calcula los importes finales y la capacidad contratada sin recibir precios del navegador.
     public ResumenPlan calcular(PlanEmpresaForm form) {
         validacion.validar(form);
@@ -78,10 +105,10 @@ public class PlanEmpresaService {
         if (!Objects.equals(form.getVersion(), empresa.getVersionPlan())) {
             throw new ReglaNegocioException("El plan cambió mientras lo editabas. Vuelve a abrir su configuración.");
         }
-        if (sedes.countByEmpresaIdAndEstadoTrue(empresaId) > resumen.sedesTotales()) {
+        if (sedes.activasParaCupo(empresaId).size() > resumen.sedesTotales()) {
             throw new ReglaNegocioException("La empresa tiene más sedes activas que las seleccionadas. Amplía el plan o desactiva las sedes que ya no utilice.");
         }
-        if (usuarios.countByEmpresaIdAndEstadoTrue(empresaId) > resumen.usuariosTotales()) {
+        if (usuarios.activosParaCupo(empresaId).size() > resumen.usuariosTotales()) {
             throw new ReglaNegocioException("La empresa tiene más cuentas activas que las seleccionadas. Amplía el plan o desactiva las cuentas que ya no utilice.");
         }
         empresa.setPlanComercial(form.getPlan());
@@ -101,4 +128,6 @@ public class PlanEmpresaService {
     public record ResumenPlan(PlanComercial plan, PeriodicidadPlan periodicidad, int sedesAdicionales,
             int usuariosAdicionales, long sedesTotales, long usuariosTotales, BigDecimal importeSedes,
             BigDecimal importeUsuarios, BigDecimal totalMensual, BigDecimal totalPeriodo) {}
+
+    public record UsoPlan(long sedesActivas, long usuariosActivos) {}
 }

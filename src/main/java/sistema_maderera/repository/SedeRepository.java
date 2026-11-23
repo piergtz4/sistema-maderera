@@ -20,6 +20,10 @@ public interface SedeRepository extends JpaRepository<Sede, Long> {
     Optional<Sede> findByIdAndEmpresaIdAndEstadoTrue(Long id, Long empresaId);
     Optional<Sede> findByEmpresaIdAndNombreIgnoreCase(Long empresaId, String nombre);
     long countByEmpresaIdAndEstadoTrue(Long empresaId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from Sede s where s.empresa.id = :empresaId and s.estado = true order by s.id")
+    List<Sede> activasParaCupo(Long empresaId);
     Optional<Sede> findByEmpresaIdAndCodigoDocumentos(Long empresaId, Integer codigoDocumentos);
     @Query("select coalesce(max(s.codigoDocumentos), 0) from Sede s where s.empresa.id = :empresaId")
     int ultimoCodigoDocumentos(Long empresaId);

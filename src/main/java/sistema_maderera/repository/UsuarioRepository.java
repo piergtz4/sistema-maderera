@@ -4,6 +4,8 @@ import sistema_maderera.entity.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +27,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     long countByEmpresaIdAndRolAndEstadoTrue(Long empresaId, String rol);
     long countByEmpresaIdAndEstadoTrue(Long empresaId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from Usuario u where u.empresa.id = :empresaId and u.estado = true order by u.id")
+    List<Usuario> activosParaCupo(Long empresaId);
 
     List<Usuario> findByEmpresaIdAndRolOrderByNombreAsc(Long empresaId, String rol);
 

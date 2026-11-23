@@ -23,16 +23,18 @@ public class SedeService {
     private final ValidacionService validacion;
     private final CorrelativoDocumentoRepository correlativos;
     private final DocumentoVentaRepository documentos;
+    private final PlanEmpresaService planes;
 
     public SedeService(SedeRepository sedes, EmpresaRepository empresas,
             UsuarioRepository usuarios, ValidacionService validacion,
-            CorrelativoDocumentoRepository correlativos, DocumentoVentaRepository documentos) {
+            CorrelativoDocumentoRepository correlativos, DocumentoVentaRepository documentos, PlanEmpresaService planes) {
         this.sedes = sedes;
         this.empresas = empresas;
         this.usuarios = usuarios;
         this.validacion = validacion;
         this.correlativos = correlativos;
         this.documentos = documentos;
+        this.planes = planes;
     }
 
     public List<Sede> listar(Long empresaId) {
@@ -67,6 +69,7 @@ public class SedeService {
                 .filter(s -> s.getEmpresa().getId().equals(empresaId))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sede no encontrada en tu empresa."));
         if (form.getId() == null) {
+            planes.validarCupoSede(empresa);
             sede.setEmpresa(empresa);
         }
         Integer codigo = form.getCodigoDocumentos() != null ? form.getCodigoDocumentos()
@@ -93,13 +96,14 @@ public class SedeService {
 
     @Transactional
     public boolean cambiarEstado(Long empresaId, Long id) {
-        empresas.bloquearParaUsuarios(empresaId)
+        var empresa = empresas.bloquearParaUsuarios(empresaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
         Sede sede = buscar(empresaId, id);
         if (Boolean.TRUE.equals(sede.getEstado()) && sedes.countByEmpresaIdAndEstadoTrue(empresaId) <= 1) {
             throw new ReglaNegocioException("No puedes desactivar la última sede activa de la empresa.");
         }
         boolean activo = !Boolean.TRUE.equals(sede.getEstado());
+        if (activo) planes.validarCupoSede(empresa);
         sede.setEstado(activo);
         sedes.save(sede);
         if (!activo) {

@@ -50,6 +50,7 @@ public class PlataformaEmpresaDetalleController {
         model.addAttribute("nombreAdministrador", actor.getNombre());
         model.addAttribute("empresa", empresas.buscar(empresaId));
         model.addAttribute("planEmpresa", planes.resumen(empresaId));
+        model.addAttribute("usoPlan", planes.uso(empresaId));
         model.addAttribute("sedes", sedes.listar(empresaId));
         model.addAttribute("usuariosEmpresa", administradores.listarUsuarios(empresaId));
         var cuentas = administradores.listar(empresaId);

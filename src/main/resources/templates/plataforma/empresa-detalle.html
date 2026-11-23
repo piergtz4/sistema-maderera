@@ -66,6 +66,8 @@
                 <div><dt>Modalidad de pago</dt><dd th:text="${planEmpresa.periodicidad.nombre}"></dd></div>
                 <div><dt>Sedes activas contratadas</dt><dd th:text="${planEmpresa.sedesTotales}"></dd></div>
                 <div><dt>Cuentas activas contratadas</dt><dd th:text="${planEmpresa.usuariosTotales}"></dd></div>
+                <div><dt>Sedes activas actualmente</dt><dd th:text="${usoPlan.sedesActivas}"></dd></div>
+                <div><dt>Cuentas activas actualmente</dt><dd th:text="${usoPlan.usuariosActivos}"></dd></div>
                 <div><dt>Sedes adicionales</dt><dd th:text="${planEmpresa.sedesAdicionales}"></dd></div>
                 <div><dt>Cuentas adicionales</dt><dd th:text="${planEmpresa.usuariosAdicionales}"></dd></div>
                 <div><dt>Ventas confirmadas al mes</dt><dd th:text="${planEmpresa.plan.ventasMensuales}"></dd></div>

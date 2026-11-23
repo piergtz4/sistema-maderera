@@ -29,16 +29,18 @@ public class UsuarioGestionService {
     private final PasswordEncoder encoder;
     private final ValidacionService validacion;
     private final PoliticaContrasenaService contrasenas;
+    private final PlanEmpresaService planes;
 
     public UsuarioGestionService(UsuarioRepository usuarios, SedeRepository sedes,
             EmpresaRepository empresas, PasswordEncoder encoder, ValidacionService validacion,
-            PoliticaContrasenaService contrasenas) {
+            PoliticaContrasenaService contrasenas, PlanEmpresaService planes) {
         this.usuarios = usuarios;
         this.sedes = sedes;
         this.empresas = empresas;
         this.encoder = encoder;
         this.validacion = validacion;
         this.contrasenas = contrasenas;
+        this.planes = planes;
     }
 
     public List<Usuario> listar(Long empresaId) {
@@ -82,6 +84,7 @@ public class UsuarioGestionService {
             throw new ReglaNegocioException("Debe quedar al menos un administrador general activo.");
         }
         Sede sede = resolverSede(empresaId, form.getRol(), form.getSedeId());
+        if (usuario.getId() == null) planes.validarCupoUsuario(empresa);
         String password = form.getPassword();
         if (usuario.getId() == null || password != null && !password.isEmpty()) {
             contrasenas.validar(password, form.getConfirmarPassword());
@@ -108,7 +111,7 @@ public class UsuarioGestionService {
 
     @Transactional
     public boolean cambiarEstado(Long empresaId, Long actorId, Long id) {
-        empresas.bloquearParaUsuarios(empresaId)
+        Empresa empresa = empresas.bloquearParaUsuarios(empresaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
         Usuario usuario = buscar(empresaId, id);
         if (Objects.equals(actorId, id)) {
@@ -123,6 +126,7 @@ public class UsuarioGestionService {
                 && (usuario.getSede() == null || !Boolean.TRUE.equals(usuario.getSede().getEstado()))) {
             throw new ReglaNegocioException("Asigna una sede activa antes de activar esta cuenta.");
         }
+        if (activo) planes.validarCupoUsuario(empresa);
         usuario.setEstado(activo);
         usuario.setVersionAcceso(usuario.getVersionAcceso() + 1);
         usuarios.save(usuario);
