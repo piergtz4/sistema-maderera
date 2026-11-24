@@ -17,3 +17,13 @@ Java 21, Spring Boot, Thymeleaf, MySQL, JPA/Hibernate y Flyway.
 ```
 
 Abrir http://localhost:8080 en el navegador. Flyway aplica las migraciones pendientes al iniciar.
+
+## Cuentas y sedes
+
+- El administrador general gestiona todas las sedes de su empresa y asigna los accesos desde Usuarios.
+- El administrador de sede y el contador pueden tener una o varias sedes autorizadas, con permiso de consulta o de gestión en cada una.
+- El contador consulta inventario y movimientos, exporta el inventario y, con gestión, registra compras y proveedores. No realiza ventas ni ajustes manuales de stock.
+
+Con una sola sede autorizada se ingresa directamente; con varias se elige la sede de trabajo. Cambiar los permisos requiere iniciar sesión de nuevo. La migración V19 convierte el antiguo rol Consulta en Contador conservando sus sedes y su permiso de lectura.
+
+El administrador general puede eliminar usuarios sin operaciones asociadas y sedes sin usuarios, inventario ni documentos vinculados, después de confirmarlo. La eliminación es definitiva; los registros con historial se conservan y pueden desactivarse. La cuenta propia y la última sede activa están protegidas.

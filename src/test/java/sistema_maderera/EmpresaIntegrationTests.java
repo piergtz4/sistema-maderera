@@ -86,12 +86,11 @@ class EmpresaIntegrationTests {
     }
 
     @Test
-    void administradorGeneralIniciaSinSedeYDebeSeleccionarUna() throws Exception {
+    void administradorGeneralEntraDirectamenteSiSoloHayUnaSedeActiva() throws Exception {
         assertThat(usuarios.findByUsuario("admin").orElseThrow().getSede()).isNull();
-        mvc.perform(get("/dashboard").session(sesionGeneral))
-                .andExpect(redirectedUrl("/seleccionar-sede"));
-        mvc.perform(get("/seleccionar-sede").session(sesionGeneral)).andExpect(status().isOk())
-                .andExpect(content().string(containsString("Sede Parcona")));
+        mvc.perform(get("/dashboard").session(sesionGeneral)).andExpect(status().isOk())
+                .andExpect(model().attribute("sedeNombre", "Sede Parcona"));
+        mvc.perform(get("/seleccionar-sede").session(sesionGeneral)).andExpect(redirectedUrl("/dashboard"));
         seleccionar(parcona.getId());
         mvc.perform(get("/dashboard").session(sesionGeneral)).andExpect(status().isOk())
                 .andExpect(model().attribute("sedeNombre", "Sede Parcona"))
@@ -113,18 +112,18 @@ class EmpresaIntegrationTests {
         ajena = sedes.save(ajena);
         mvc.perform(post("/sede-trabajo").session(sesionGeneral).with(csrf())
                 .param("sedeId", ajena.getId().toString())).andExpect(redirectedUrl("/seleccionar-sede"))
-                .andExpect(flash().attribute("error", "Selecciona una sede activa de tu empresa."));
+                .andExpect(flash().attribute("error", "Selecciona una sede activa que tengas autorizada."));
         sesionGeneral.setAttribute("sedeTrabajoId", ajena.getId());
         mvc.perform(get("/dashboard").session(sesionGeneral))
-                .andExpect(redirectedUrl("/seleccionar-sede"));
+                .andExpect(status().isOk()).andExpect(model().attribute("sedeNombre", "Sede Parcona"));
     }
 
     @Test
-    void administradorDeSedeNoPuedeCambiarSuContexto() throws Exception {
+    void administradorDeSedeSoloPuedeSeleccionarSuSedeAutorizada() throws Exception {
         MockHttpSession sesion = autenticar("operador");
-        mvc.perform(get("/seleccionar-sede").session(sesion)).andExpect(status().isForbidden());
+        mvc.perform(get("/seleccionar-sede").session(sesion)).andExpect(redirectedUrl("/dashboard"));
         mvc.perform(post("/sede-trabajo").session(sesion).with(csrf())
-                .param("sedeId", parcona.getId().toString())).andExpect(status().isForbidden());
+                .param("sedeId", parcona.getId().toString())).andExpect(redirectedUrl("/dashboard"));
     }
 
     @Test

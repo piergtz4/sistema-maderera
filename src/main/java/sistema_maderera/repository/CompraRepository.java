@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.*;
 import sistema_maderera.entity.*;
 
 public interface CompraRepository extends JpaRepository<Compra, Long> {
+    boolean existsBySedeId(Long sedeId);
+    @Query("select count(c) from Compra c where c.usuario.id = :usuarioId or c.confirmadoPor.id = :usuarioId")
+    long countReferenciasUsuario(Long usuarioId);
     @EntityGraph(attributePaths = {"proveedor", "usuario"})
     List<Compra> findBySedeIdOrderByActualizadoDescIdDesc(Long sedeId);
     @EntityGraph(attributePaths = {"proveedor", "usuario", "sede", "confirmadoPor"})

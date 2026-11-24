@@ -34,13 +34,14 @@ public class DocumentoVentaService {
     private final MovimientoInventarioRepository movimientos;
     private final EmpresaRepository empresas;
     private final CuentaEmpresaService cuentas;
+    private final AccesoSedeService accesos;
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
 
     public DocumentoVentaService(DocumentoVentaRepository documentos, SedeRepository sedes,
             UsuarioRepository usuarios, ClienteService clientes, ValidacionService validacion, Clock clock,
             InventarioRepository inventarios, NumeracionDocumentoService numeracion,
-            MovimientoInventarioRepository movimientos, EmpresaRepository empresas, CuentaEmpresaService cuentas) {
+            MovimientoInventarioRepository movimientos, EmpresaRepository empresas, CuentaEmpresaService cuentas, AccesoSedeService accesos) {
         this.documentos = documentos;
         this.sedes = sedes;
         this.usuarios = usuarios;
@@ -52,6 +53,7 @@ public class DocumentoVentaService {
         this.movimientos = movimientos;
         this.empresas = empresas;
         this.cuentas = cuentas;
+        this.accesos = accesos;
     }
 
     public List<DocumentoVenta> listar(Long sedeId) { return documentos.findBySedeIdOrderByActualizadoDescIdDesc(sedeId); }
@@ -165,11 +167,11 @@ public class DocumentoVentaService {
                 .filter(s -> s.getEmpresa().getId().equals(usuario.getEmpresa().getId()) && s.getEstado())
                 .orElseThrow(() -> new ReglaNegocioException("Selecciona una sede activa de tu empresa."));
         boolean general = "ADMINISTRADOR_GENERAL".equals(usuario.getRol());
-        boolean local = "ADMINISTRADOR".equals(usuario.getRol()) && usuario.getSede() != null
-                && usuario.getSede().getId().equals(sedeId);
+        boolean local = "ADMINISTRADOR".equals(usuario.getRol());
         if (!usuario.getEstado() || !usuario.getEmpresa().getEstado() || !(general || local)) {
             throw new ReglaNegocioException("No tienes permiso para registrar documentos en esta sede.");
         }
+        accesos.exigirGestion(usuario, sedeId);
         return sede;
     }
 

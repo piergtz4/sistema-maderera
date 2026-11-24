@@ -15,11 +15,15 @@ public class UsuarioPrincipal extends User {
     private final DatosUsuario datos;
 
     public UsuarioPrincipal(Usuario usuario) {
+        this(usuario, "ADMINISTRADOR_GENERAL".equals(usuario.getRol())
+                || usuario.getSede() != null && Boolean.TRUE.equals(usuario.getSede().getEstado()));
+    }
+
+    public UsuarioPrincipal(Usuario usuario, boolean tieneSedeActiva) {
         super(usuario.getUsuario(), usuario.getPassword(),
                 Boolean.TRUE.equals(usuario.getEstado())
                         && Boolean.TRUE.equals(usuario.getEmpresa().getEstado())
-                        && ("ADMINISTRADOR_GENERAL".equals(usuario.getRol())
-                            || usuario.getSede() != null && Boolean.TRUE.equals(usuario.getSede().getEstado())),
+                        && tieneSedeActiva,
                 true, true, true,
                 List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getRol())));
         Sede sede = usuario.getSede();

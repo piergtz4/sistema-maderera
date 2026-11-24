@@ -24,14 +24,14 @@
                     <div th:if="${!#strings.isEmpty(compra.detalles)}"><strong>Detalles generales</strong><p class="detalle-texto" th:text="${compra.detalles}"></p></div>
                     <p th:text="${'Registrado por: ' + compra.usuario.nombre}"></p>
                     <p class="notice success" th:if="${compra.confirmadoEn != null}" th:text="${'Ingreso confirmado el ' + #temporals.format(compra.confirmadoEn, 'dd/MM/yyyy HH:mm') + ' por ' + compra.confirmadoPor.nombre}"></p>
-                    <p th:if="${compra.estado.name() == 'PENDIENTE'}" class="help">Confirma únicamente cuando la mercadería haya sido recibida. Todas las cantidades ingresarán a esta sede; después no podrás editar ni eliminar la compra.</p>
+                    <p th:if="${puedeGestionarCompras and compra.estado.name() == 'PENDIENTE'}" class="help">Confirma únicamente cuando la mercadería haya sido recibida. Todas las cantidades ingresarán a esta sede; después no podrás editar ni eliminar la compra.</p>
                     <div class="form-actions">
                         <a class="secondary-button" th:href="@{/compras}">Volver</a>
-                        <a class="secondary-button" th:if="${compra.estado.name() == 'PENDIENTE'}" th:href="@{/compras/{id}/editar(id=${compra.id})}">Corregir datos</a>
+                        <a class="secondary-button" th:if="${puedeGestionarCompras and compra.estado.name() == 'PENDIENTE'}" th:href="@{/compras/{id}/editar(id=${compra.id})}">Corregir datos</a>
                         <a class="secondary-button" th:if="${compra.estado.name() == 'CONFIRMADA'}" th:href="@{/movimientos}">Ver movimientos</a>
-                        <form th:if="${compra.estado.name() == 'PENDIENTE'}" th:action="@{/compras/{id}/confirmar(id=${compra.id})}" method="post"><input type="hidden" name="version" th:value="${compra.version}"><button class="primary-button" type="submit" th:disabled="${compra.total.signum() <= 0}">Confirmar ingreso de mercadería</button></form>
+                        <form th:if="${puedeGestionarCompras and compra.estado.name() == 'PENDIENTE'}" th:action="@{/compras/{id}/confirmar(id=${compra.id})}" method="post"><input type="hidden" name="version" th:value="${compra.version}"><button class="primary-button" type="submit" th:disabled="${compra.total.signum() <= 0}">Confirmar ingreso de mercadería</button></form>
                     </div>
-                    <div th:if="${compra.estado.name() == 'PENDIENTE'}"><details th:replace="~{fragments/descartar-compra :: confirmacion(${compra.id}, ${compra.version})}"></details></div>
+                    <div th:if="${puedeGestionarCompras and compra.estado.name() == 'PENDIENTE'}"><details th:replace="~{fragments/descartar-compra :: confirmacion(${compra.id}, ${compra.version})}"></details></div>
                 </div>
             </section>
         </section>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Confirmar eliminación')}"></head>
+<body>
+<div class="dashboard-layout">
+    <aside th:replace="~{fragments/layout :: sidebar(${tipoRegistro == 'sede' ? 'sedes' : 'usuarios'})}"></aside>
+    <main class="main-content">
+        <header th:replace="~{fragments/layout :: topbar('Confirmar eliminación', 'Revisa el registro antes de continuar')}"></header>
+        <section class="dashboard-content">
+            <section class="dashboard-card form-card">
+                <div class="card-header"><h2 th:text="${'Eliminar ' + tipoRegistro}"></h2></div>
+                <form class="edit-form" th:action="@{${accionEliminar}}" method="post">
+                    <p>Vas a eliminar: <strong th:text="${nombreRegistro}"></strong>.</p>
+                    <p th:text="${efectoEliminacion}"></p>
+                    <p class="help">Esta acción no se puede deshacer.</p>
+                    <label class="confirmacion-eliminar"><input type="checkbox" name="confirmar" value="true" required>Confirmo que deseo eliminar este registro.</label>
+                    <div class="form-actions"><a class="secondary-button" th:href="@{${volver}}">Cancelar</a><button class="secondary-button danger-button" type="submit" th:text="${'Sí, eliminar ' + tipoRegistro}"></button></div>
+                </form>
+            </section>
+        </section>
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
+    </main>
+</div>
+</body>
+</html>

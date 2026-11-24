@@ -28,8 +28,7 @@ public class DashboardController {
             @RequestParam(defaultValue = "hoy") String periodo, @RequestParam(defaultValue = "") String desde,
             @RequestParam(defaultValue = "") String hasta) {
         var sede = contexto.actual(usuario, sesion);
-        if (sede.isEmpty()) return contexto.esAdministradorGeneral(usuario)
-                ? "redirect:/seleccionar-sede" : "error/403";
+        if (sede.isEmpty()) return "redirect:/seleccionar-sede";
         model.addAttribute("resumen", inventario.resumen(sede.get().getId()));
         DashboardService.Periodo fechas;
         try { fechas = dashboard.periodo(periodo, desde, hasta); }

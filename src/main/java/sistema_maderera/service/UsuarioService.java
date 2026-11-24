@@ -13,15 +13,18 @@ import sistema_maderera.security.UsuarioPrincipal;
 @Service
 public class UsuarioService implements UserDetailsService {
     private final UsuarioRepository usuarioRepository;
+    private final AccesoSedeService accesos;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, AccesoSedeService accesos) {
         this.usuarioRepository = usuarioRepository;
+        this.accesos = accesos;
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) {
-        return usuarioRepository.findByUsuarioIgnoreCase(username.trim()).map(UsuarioPrincipal::new)
+        return usuarioRepository.findByUsuarioIgnoreCase(username.trim())
+                .map(u -> new UsuarioPrincipal(u, accesos.tieneSedeActiva(u)))
                 .orElseThrow(() -> new UsernameNotFoundException("Credenciales incorrectas."));
     }
 
@@ -36,8 +39,7 @@ public class UsuarioService implements UserDetailsService {
         Long sedeId = usuario.getSede() == null ? null : usuario.getSede().getId();
         return Boolean.TRUE.equals(usuario.getEstado())
                 && Boolean.TRUE.equals(usuario.getEmpresa().getEstado())
-                && ("ADMINISTRADOR_GENERAL".equals(usuario.getRol()) || usuario.getSede() != null
-                    && Boolean.TRUE.equals(usuario.getSede().getEstado()))
+                && accesos.tieneSedeActiva(usuario)
                 && Objects.equals(usuario.getUsuario(), principal.getUsername())
                 && Objects.equals(usuario.getNombre(), datos.nombre())
                 && Objects.equals(usuario.getRol(), datos.rol())

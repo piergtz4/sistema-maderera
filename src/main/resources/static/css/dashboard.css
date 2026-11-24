@@ -60,6 +60,9 @@ small { display: block; color: var(--muted); font-size: 12px; }
 .primary-button:hover { background: var(--brown-dark); }
 .secondary-button { background: #fff; color: var(--brown); border: 1px solid #cfc2b5; }
 .secondary-button:hover { background: var(--paper); }
+.danger-button { color: #a52b22; border-color: #d7aaa6; }
+.danger-button:hover { background: #fff2f0; }
+.confirmacion-eliminar { display: flex; align-items: center; gap: 10px; }
 #exportarInventario { gap: 7px; }
 .filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; padding: 18px 22px; background: #fcfbf9; border-bottom: 1px solid var(--line); }
 .filters label:first-child { flex: 1; max-width: 450px; }
@@ -67,6 +70,7 @@ label { display: grid; gap: 6px; color: var(--brown); font-size: 12px; font-weig
 input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #d8cfc5; border-radius: 7px; background: #fff; color: var(--text); font-weight: 400; outline: none; }
 input:focus, select:focus, textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px #dd823122; }
 input[readonly] { background: var(--paper); color: var(--muted); }
+input[type="checkbox"] { width: 18px; height: 18px; padding: 0; accent-color: var(--brown); vertical-align: middle; }
 input:disabled, select:disabled { background: var(--paper); color: var(--muted); opacity: 1; cursor: not-allowed; }
 textarea { min-height: 95px; resize: vertical; }
 .table-container { width: 100%; overflow-x: auto; }

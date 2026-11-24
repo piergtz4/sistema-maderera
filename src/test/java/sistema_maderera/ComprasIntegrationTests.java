@@ -252,8 +252,10 @@ class ComprasIntegrationTests {
             mvc.perform(post(ruta + "/" + accion).session(local).with(csrf()).param("version", doc.getVersion().toString())).andExpect(status().isNotFound());
         }
         var consulta = login("consulta");
-        mvc.perform(get("/compras").session(consulta)).andExpect(status().isForbidden());
-        mvc.perform(get("/proveedores").session(consulta)).andExpect(status().isForbidden());
+        mvc.perform(get("/compras").session(consulta)).andExpect(status().isOk());
+        mvc.perform(get("/proveedores").session(consulta)).andExpect(status().isOk());
+        mvc.perform(post(ruta + "/confirmar").session(consulta).with(csrf())
+                .param("version", doc.getVersion().toString())).andExpect(status().isForbidden());
         mvc.perform(post("/proveedores/" + proveedorId + "/estado").session(local).with(csrf())).andExpect(status().isForbidden());
         mvc.perform(post(ruta + "/confirmar").session(sesion).with(csrf()).param("version", doc.getVersion().toString()))
                 .andExpect(redirectedUrl(ruta)).andExpect(flash().attributeExists("mensaje"));

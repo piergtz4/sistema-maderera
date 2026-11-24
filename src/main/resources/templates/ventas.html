@@ -9,7 +9,7 @@
         <section class="dashboard-content">
             <div th:replace="~{fragments/layout :: mensajes}"></div>
             <section class="dashboard-card">
-                <div class="card-header"><div><h2>Documentos de <span th:text="${sedeNombre}"></span></h2><p>Versión de prueba sin valor tributario. Los documentos pendientes no modifican stock ni registran cobros.</p></div><a class="primary-button" th:href="@{/ventas/nuevo}">Realizar venta</a></div>
+                <div class="card-header"><div><h2>Documentos de <span th:text="${sedeNombre}"></span></h2><p>Versión de prueba sin valor tributario. Los documentos pendientes no modifican stock ni registran cobros.</p></div><a class="primary-button" th:if="${puedeGestionarVentas}" th:href="@{/ventas/nuevo}">Realizar venta</a></div>
                 <div class="filters"><label>Buscar<input id="buscador" type="search" placeholder="Tipo, cliente o usuario"></label><button id="limpiarFiltros" class="secondary-button" type="button">Limpiar filtros</button></div>
                 <div class="table-container"><table>
                     <thead><tr><th>Actualizado</th><th>Tipo</th><th>Número</th><th>Cliente</th><th>Total S/</th><th>Estado</th><th>Creado por</th><th>Acciones</th></tr></thead>
@@ -20,7 +20,7 @@
                             <td th:text="${d.confirmadoEn != null ? d.clienteNombre : (d.cliente == null ? 'Sin cliente identificado' : d.cliente.nombre)}"></td>
                             <td th:text="${#numbers.formatDecimal(d.total, 1, 2)}"></td>
                             <td><span class="badge" th:classappend="${d.estado.name() == 'ANULADO' ? 'anulado' : ''}" th:text="${d.estado.name() == 'BORRADOR' ? 'Pendiente' : d.estado}"></span></td><td th:text="${d.usuario.nombre}"></td>
-                            <td><a class="secondary-button" th:if="${d.estado.name() == 'BORRADOR'}" th:href="@{/ventas/{id}/editar(id=${d.id})}">Continuar</a> <a class="secondary-button" th:href="@{/ventas/{id}(id=${d.id})}">Ver detalle</a></td>
+                            <td><a class="secondary-button" th:if="${puedeGestionarVentas and d.estado.name() == 'BORRADOR'}" th:href="@{/ventas/{id}/editar(id=${d.id})}">Continuar</a> <a class="secondary-button" th:href="@{/ventas/{id}(id=${d.id})}">Ver detalle</a></td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(documentos)}"><td colspan="8" class="empty">Todavía no hay documentos en esta sede.</td></tr>
                         <tr id="sinResultados" hidden><td colspan="8" class="empty">No hay coincidencias con la búsqueda.</td></tr>

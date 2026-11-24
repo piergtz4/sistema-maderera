@@ -23,10 +23,18 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @EntityGraph(attributePaths = {"sede"})
     Optional<Usuario> findByIdAndEmpresaId(Long id, Long empresaId);
 
+    @Query("select u from Usuario u where u.empresa.id = :empresaId and u.estado = true "
+            + "and (u.sede.id = :sedeId or exists (select a.id from AccesoUsuarioSede a "
+            + "where a.usuario = u and a.sede.id = :sedeId))")
     List<Usuario> findByEmpresaIdAndSedeIdAndEstadoTrue(Long empresaId, Long sedeId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from Usuario u where u.empresa.id = :empresaId and u.rol = 'ADMINISTRADOR_GENERAL' order by u.id")
+    List<Usuario> generalesParaEdicion(Long empresaId);
 
     long countByEmpresaIdAndRolAndEstadoTrue(Long empresaId, String rol);
     long countByEmpresaIdAndEstadoTrue(Long empresaId);
+    boolean existsBySedeId(Long sedeId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from Usuario u where u.empresa.id = :empresaId and u.estado = true order by u.id")

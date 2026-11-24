@@ -18,6 +18,7 @@ public class SedeTrabajoController {
 
     @GetMapping("/seleccionar-sede")
     public String seleccionar(@AuthenticationPrincipal UsuarioPrincipal usuario, Model model) {
+        if (contexto.disponibles(usuario).size() == 1) return "redirect:/dashboard";
         model.addAttribute("sedes", contexto.disponibles(usuario));
         return "seleccionar-sede";
     }

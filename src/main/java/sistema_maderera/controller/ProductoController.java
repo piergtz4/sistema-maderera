@@ -40,7 +40,9 @@ public class ProductoController {
     public String listar(@AuthenticationPrincipal UsuarioPrincipal usuario, Model model) {
         Long empresaId = usuario.getDatos().empresaId();
         model.addAttribute("productos", productos.listarTodos(empresaId));
-        model.addAttribute("sedesPorProducto", inventario.sedesRegistradasPorProducto(empresaId));
+        var autorizadas = contexto.esAdministradorGeneral(usuario) ? null : contexto.disponibles(usuario).stream()
+                .map(s -> s.getId()).collect(java.util.stream.Collectors.toSet());
+        model.addAttribute("sedesPorProducto", inventario.sedesRegistradasPorProducto(empresaId, autorizadas));
         return "productos";
     }
 

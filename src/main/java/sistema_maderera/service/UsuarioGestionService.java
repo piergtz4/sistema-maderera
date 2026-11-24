@@ -4,6 +4,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.LinkedHashMap;
+import sistema_maderera.entity.AccesoUsuarioSede;
+import sistema_maderera.repository.AccesoUsuarioSedeRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +22,15 @@ import sistema_maderera.exception.ReglaNegocioException;
 import sistema_maderera.repository.EmpresaRepository;
 import sistema_maderera.repository.SedeRepository;
 import sistema_maderera.repository.UsuarioRepository;
+import sistema_maderera.repository.MovimientoInventarioRepository;
+import sistema_maderera.repository.CompraRepository;
+import sistema_maderera.repository.DocumentoVentaRepository;
 
 @Service
 @Transactional(readOnly = true)
 public class UsuarioGestionService {
     private static final String GENERAL = "ADMINISTRADOR_GENERAL";
-    private static final Set<String> ROLES = Set.of(GENERAL, "ADMINISTRADOR", "CONSULTA");
+    private static final Set<String> ROLES = Set.of(GENERAL, "ADMINISTRADOR", "CONTADOR");
     private final UsuarioRepository usuarios;
     private final SedeRepository sedes;
     private final EmpresaRepository empresas;
@@ -30,10 +38,17 @@ public class UsuarioGestionService {
     private final ValidacionService validacion;
     private final PoliticaContrasenaService contrasenas;
     private final PlanEmpresaService planes;
+    private final AccesoSedeService accesos;
+    private final AccesoUsuarioSedeRepository asignaciones;
+    private final MovimientoInventarioRepository movimientos;
+    private final CompraRepository compras;
+    private final DocumentoVentaRepository documentos;
 
     public UsuarioGestionService(UsuarioRepository usuarios, SedeRepository sedes,
             EmpresaRepository empresas, PasswordEncoder encoder, ValidacionService validacion,
-            PoliticaContrasenaService contrasenas, PlanEmpresaService planes) {
+            PoliticaContrasenaService contrasenas, PlanEmpresaService planes,
+            AccesoSedeService accesos, AccesoUsuarioSedeRepository asignaciones,
+            MovimientoInventarioRepository movimientos, CompraRepository compras, DocumentoVentaRepository documentos) {
         this.usuarios = usuarios;
         this.sedes = sedes;
         this.empresas = empresas;
@@ -41,6 +56,11 @@ public class UsuarioGestionService {
         this.validacion = validacion;
         this.contrasenas = contrasenas;
         this.planes = planes;
+        this.accesos = accesos;
+        this.asignaciones = asignaciones;
+        this.movimientos = movimientos;
+        this.compras = compras;
+        this.documentos = documentos;
     }
 
     public List<Usuario> listar(Long empresaId) {
@@ -55,6 +75,11 @@ public class UsuarioGestionService {
         form.setUsuario(usuario.getUsuario());
         form.setRol(usuario.getRol());
         form.setSedeId(usuario.getSede() == null ? null : usuario.getSede().getId());
+        if (!GENERAL.equals(usuario.getRol())) {
+            form.setSedeIds(accesos.asignados(usuario).stream().map(a -> a.sede().getId()).toList());
+            form.setSedesGestionIds(accesos.asignados(usuario).stream().filter(AccesoSedeService.PermisoSede::gestion)
+                    .map(a -> a.sede().getId()).toList());
+        }
         return form;
     }
 
@@ -83,7 +108,18 @@ public class UsuarioGestionService {
                 && usuarios.countByEmpresaIdAndRolAndEstadoTrue(empresaId, GENERAL) <= 1) {
             throw new ReglaNegocioException("Debe quedar al menos un administrador general activo.");
         }
-        Sede sede = resolverSede(empresaId, form.getRol(), form.getSedeId());
+        if (GENERAL.equals(form.getRol()) && !GENERAL.equals(usuario.getRol())
+                && usuarios.generalesParaEdicion(empresaId).stream().anyMatch(u -> !Objects.equals(u.getId(), usuario.getId()))) {
+            throw new ReglaNegocioException("La empresa ya tiene un administrador general. Crea una cuenta de contador o administrador de sede.");
+        }
+        Map<Sede, Boolean> permisos = resolverSedes(empresaId, form);
+        Map<Long, Boolean> anteriores = new TreeMap<>();
+        if (usuario.getId() != null && !GENERAL.equals(usuario.getRol()))
+            accesos.asignados(usuario).forEach(a -> anteriores.put(a.sede().getId(), a.gestion()));
+        Map<Long, Boolean> nuevos = new TreeMap<>();
+        permisos.forEach((s, gestion) -> nuevos.put(s.getId(), gestion));
+        boolean cambiaAcceso = !Objects.equals(usuario.getRol(), form.getRol()) || !anteriores.equals(nuevos);
+        Sede sede = permisos.keySet().stream().findFirst().orElse(null);
         if (usuario.getId() == null) planes.validarCupoUsuario(empresa);
         String password = form.getPassword();
         if (usuario.getId() == null || password != null && !password.isEmpty()) {
@@ -106,7 +142,18 @@ public class UsuarioGestionService {
         usuario.setUsuario(login);
         usuario.setRol(form.getRol());
         usuario.setSede(sede);
-        return usuarios.save(usuario);
+        if (usuario.getId() != null && cambiaAcceso) usuario.setVersionAcceso(usuario.getVersionAcceso() + 1);
+        usuarios.save(usuario);
+        asignaciones.deleteByUsuarioId(usuario.getId());
+        asignaciones.flush();
+        permisos.forEach((asignada, gestion) -> {
+            AccesoUsuarioSede acceso = new AccesoUsuarioSede();
+            acceso.setUsuario(usuario);
+            acceso.setSede(asignada);
+            acceso.setPuedeGestionar(gestion);
+            asignaciones.save(acceso);
+        });
+        return usuario;
     }
 
     @Transactional
@@ -123,7 +170,7 @@ public class UsuarioGestionService {
         }
         boolean activo = !Boolean.TRUE.equals(usuario.getEstado());
         if (activo && !GENERAL.equals(usuario.getRol())
-                && (usuario.getSede() == null || !Boolean.TRUE.equals(usuario.getSede().getEstado()))) {
+                && !accesos.tieneAsignacionActiva(usuario)) {
             throw new ReglaNegocioException("Asigna una sede activa antes de activar esta cuenta.");
         }
         if (activo) planes.validarCupoUsuario(empresa);
@@ -131,6 +178,39 @@ public class UsuarioGestionService {
         usuario.setVersionAcceso(usuario.getVersionAcceso() + 1);
         usuarios.save(usuario);
         return activo;
+    }
+
+    public String nombreParaEliminar(Long empresaId, Long actorId, Long id) {
+        Usuario usuario = buscar(empresaId, id);
+        validarEliminacion(usuario, actorId, empresaId);
+        return usuario.getNombre();
+    }
+
+    @Transactional
+    public void eliminar(Long empresaId, Long actorId, Long id, boolean confirmar) {
+        empresas.bloquearParaUsuarios(empresaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
+        Usuario actor = buscar(empresaId, actorId);
+        if (!GENERAL.equals(actor.getRol()) || !Boolean.TRUE.equals(actor.getEstado()) || !actor.getEmpresa().getEstado())
+            throw new ReglaNegocioException("Solo el administrador general activo puede eliminar usuarios.");
+        Usuario usuario = buscar(empresaId, id);
+        validarEliminacion(usuario, actorId, empresaId);
+        if (!confirmar) throw new ReglaNegocioException("Confirma que deseas eliminar este usuario.");
+        asignaciones.deleteByUsuarioId(id);
+        asignaciones.flush();
+        usuarios.delete(usuario);
+        usuarios.flush();
+    }
+
+    private void validarEliminacion(Usuario usuario, Long actorId, Long empresaId) {
+        if (Objects.equals(actorId, usuario.getId()))
+            throw new ReglaNegocioException("No puedes eliminar tu propia cuenta.");
+        if (GENERAL.equals(usuario.getRol()) && Boolean.TRUE.equals(usuario.getEstado())
+                && usuarios.countByEmpresaIdAndRolAndEstadoTrue(empresaId, GENERAL) <= 1)
+            throw new ReglaNegocioException("Debe quedar al menos un administrador general activo.");
+        if (movimientos.existsByUsuarioId(usuario.getId()) || compras.countReferenciasUsuario(usuario.getId()) > 0
+                || documentos.countReferenciasUsuario(usuario.getId()) > 0)
+            throw new ReglaNegocioException("No puedes eliminar este usuario porque tiene movimientos, compras o ventas asociados. Puedes desactivarlo para conservar su historial.");
     }
 
     @Transactional
@@ -154,14 +234,37 @@ public class UsuarioGestionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado en tu empresa."));
     }
 
-    private Sede resolverSede(Long empresaId, String rol, Long sedeId) {
-        if (GENERAL.equals(rol)) {
-            if (sedeId != null) throw new ReglaNegocioException("El administrador general no tiene sede fija.");
-            return null;
+    private Map<Sede, Boolean> resolverSedes(Long empresaId, UsuarioForm form) {
+        List<Long> ids = form.getSedeIds() == null ? List.of() : form.getSedeIds();
+        List<Long> gestion = form.getSedesGestionIds() == null ? List.of() : form.getSedesGestionIds();
+        if (GENERAL.equals(form.getRol())) {
+            if (form.getSedeId() != null || !ids.isEmpty() || !gestion.isEmpty())
+                throw new ReglaNegocioException("El administrador general tiene acceso a todas las sedes.");
+            return Map.of();
         }
-        if (sedeId == null) throw new ReglaNegocioException("Selecciona una sede para este usuario.");
-        return sedes.findByIdAndEmpresaIdAndEstadoTrue(sedeId, empresaId)
-                .orElseThrow(() -> new ReglaNegocioException("Selecciona una sede activa de tu empresa."));
+        // Compatibilidad con los formularios anteriores que enviaban una sola sede.
+        if (ids.isEmpty() && form.getSedeId() != null) {
+            ids = List.of(form.getSedeId());
+            if ("ADMINISTRADOR".equals(form.getRol())) gestion = ids;
+        }
+        if (ids.isEmpty()) throw new ReglaNegocioException("Selecciona una sede como mínimo para este usuario.");
+        if (ids.stream().anyMatch(Objects::isNull) || gestion.stream().anyMatch(Objects::isNull) || !ids.containsAll(gestion))
+            throw new ReglaNegocioException("Solo puedes dar gestión sobre las sedes autorizadas para consulta.");
+        Map<Sede, Boolean> permisos = new LinkedHashMap<>();
+        for (Long id : ids.stream().distinct().sorted().toList()) {
+            Sede sede = sedes.findByIdAndEmpresaIdAndEstadoTrue(id, empresaId)
+                    .orElseThrow(() -> new ReglaNegocioException("Selecciona una sede activa de tu empresa para cada permiso."));
+            permisos.put(sede, gestion.contains(id));
+        }
+        return permisos;
+    }
+
+    public Map<Long, String> descripcionesSedes(Long empresaId) {
+        return listar(empresaId).stream().collect(java.util.stream.Collectors.toMap(Usuario::getId, accesos::descripcion));
+    }
+
+    public Map<Long, Boolean> cuentasConSedeActiva(Long empresaId) {
+        return listar(empresaId).stream().collect(java.util.stream.Collectors.toMap(Usuario::getId, accesos::tieneAsignacionActiva));
     }
 
 }

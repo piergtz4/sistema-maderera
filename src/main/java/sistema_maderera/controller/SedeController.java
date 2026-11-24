@@ -1,6 +1,7 @@
 package sistema_maderera.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -58,9 +59,39 @@ public class SedeController {
         try {
             boolean activa = sedes.cambiarEstado(usuario.getDatos().empresaId(), id);
             flash.addFlashAttribute("mensaje", activa ? "Sede activada. Reactiva sus usuarios desde Usuarios si corresponde."
-                    : "Sede y usuarios asignados desactivados. Su historial se conserva.");
+                    : "Sede desactivada. Las cuentas sin otra sede activa quedaron inactivas. Su historial se conserva.");
         } catch (ReglaNegocioException e) {
             flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/sedes";
+    }
+
+    @GetMapping("/{id}/eliminar")
+    public String confirmarEliminacion(@AuthenticationPrincipal UsuarioPrincipal usuario, @PathVariable Long id,
+            Model model, RedirectAttributes flash) {
+        try {
+            model.addAttribute("nombreRegistro", sedes.nombreParaEliminar(usuario.getDatos().empresaId(), id));
+            model.addAttribute("tipoRegistro", "sede");
+            model.addAttribute("accionEliminar", "/sedes/" + id + "/eliminar");
+            model.addAttribute("volver", "/sedes");
+            model.addAttribute("efectoEliminacion", "La sede se borrará definitivamente. Solo puedes eliminarla si no tiene usuarios asignados, inventario, compras, ventas ni numeración asociados.");
+            return "eliminar-registro";
+        } catch (ReglaNegocioException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+            return "redirect:/sedes";
+        }
+    }
+
+    @PostMapping("/{id}/eliminar")
+    public String eliminar(@AuthenticationPrincipal UsuarioPrincipal usuario, @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean confirmar, RedirectAttributes flash) {
+        try {
+            sedes.eliminar(usuario.getDatos().empresaId(), usuario.getDatos().usuarioId(), id, confirmar);
+            flash.addFlashAttribute("mensaje", "Sede eliminada correctamente.");
+        } catch (ReglaNegocioException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            flash.addFlashAttribute("error", "No se pudo eliminar la sede porque tiene registros asociados. Actualiza la lista para revisarla.");
         }
         return "redirect:/sedes";
     }

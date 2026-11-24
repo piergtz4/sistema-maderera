@@ -13,6 +13,9 @@ import sistema_maderera.repository.SedeRepository;
 import sistema_maderera.repository.UsuarioRepository;
 import sistema_maderera.repository.CorrelativoDocumentoRepository;
 import sistema_maderera.repository.DocumentoVentaRepository;
+import sistema_maderera.repository.InventarioRepository;
+import sistema_maderera.repository.CompraRepository;
+import sistema_maderera.repository.AccesoUsuarioSedeRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -24,10 +27,16 @@ public class SedeService {
     private final CorrelativoDocumentoRepository correlativos;
     private final DocumentoVentaRepository documentos;
     private final PlanEmpresaService planes;
+    private final AccesoSedeService accesos;
+    private final InventarioRepository inventarios;
+    private final CompraRepository compras;
+    private final AccesoUsuarioSedeRepository asignaciones;
 
     public SedeService(SedeRepository sedes, EmpresaRepository empresas,
             UsuarioRepository usuarios, ValidacionService validacion,
-            CorrelativoDocumentoRepository correlativos, DocumentoVentaRepository documentos, PlanEmpresaService planes) {
+            CorrelativoDocumentoRepository correlativos, DocumentoVentaRepository documentos, PlanEmpresaService planes,
+            AccesoSedeService accesos, InventarioRepository inventarios, CompraRepository compras,
+            AccesoUsuarioSedeRepository asignaciones) {
         this.sedes = sedes;
         this.empresas = empresas;
         this.usuarios = usuarios;
@@ -35,6 +44,10 @@ public class SedeService {
         this.correlativos = correlativos;
         this.documentos = documentos;
         this.planes = planes;
+        this.accesos = accesos;
+        this.inventarios = inventarios;
+        this.compras = compras;
+        this.asignaciones = asignaciones;
     }
 
     public List<Sede> listar(Long empresaId) {
@@ -106,12 +119,48 @@ public class SedeService {
         if (activo) planes.validarCupoSede(empresa);
         sede.setEstado(activo);
         sedes.save(sede);
-        if (!activo) {
-            var cuentas = usuarios.findByEmpresaIdAndSedeIdAndEstadoTrue(empresaId, id);
-            cuentas.forEach(cuenta -> cuenta.setEstado(false));
-            usuarios.saveAll(cuentas);
-        }
+        if (!activo) desactivarCuentasSinSede(empresaId, id);
         return activo;
+    }
+
+    public String nombreParaEliminar(Long empresaId, Long id) {
+        Sede sede = buscar(empresaId, id);
+        validarEliminacion(sede, empresaId);
+        return sede.getNombre();
+    }
+
+    @Transactional
+    public void eliminar(Long empresaId, Long actorId, Long id, boolean confirmar) {
+        empresas.bloquearParaUsuarios(empresaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
+        usuarios.findByIdAndEmpresaId(actorId, empresaId)
+                .filter(u -> Boolean.TRUE.equals(u.getEstado())
+                        && Boolean.TRUE.equals(u.getEmpresa().getEstado()) && "ADMINISTRADOR_GENERAL".equals(u.getRol()))
+                .orElseThrow(() -> new ReglaNegocioException("Solo el administrador general activo puede eliminar sedes."));
+        Sede sede = buscar(empresaId, id);
+        validarEliminacion(sede, empresaId);
+        if (!confirmar) throw new ReglaNegocioException("Confirma que deseas eliminar esta sede.");
+        sedes.delete(sede);
+        sedes.flush();
+    }
+
+    private void validarEliminacion(Sede sede, Long empresaId) {
+        if (Boolean.TRUE.equals(sede.getEstado()) && sedes.countByEmpresaIdAndEstadoTrue(empresaId) <= 1)
+            throw new ReglaNegocioException("No puedes eliminar la última sede activa de la empresa.");
+        if (usuarios.existsBySedeId(sede.getId()) || asignaciones.existsBySedeId(sede.getId()))
+            throw new ReglaNegocioException("No puedes eliminar esta sede porque tiene usuarios asignados. Reasigna sus sedes autorizadas antes de eliminarla.");
+        if (inventarios.existsBySedeId(sede.getId()) || compras.existsBySedeId(sede.getId())
+                || documentos.existsBySedeId(sede.getId()) || correlativos.existsBySedeId(sede.getId()))
+            throw new ReglaNegocioException("No puedes eliminar esta sede porque tiene inventario, compras, ventas o numeración asociados. Puedes desactivarla para conservar su historial.");
+    }
+
+    private void desactivarCuentasSinSede(Long empresaId, Long sedeId) {
+        var cuentas = usuarios.findByEmpresaIdAndSedeIdAndEstadoTrue(empresaId, sedeId);
+        cuentas.stream().filter(cuenta -> !accesos.tieneAsignacionActiva(cuenta)).forEach(cuenta -> {
+            cuenta.setEstado(false);
+            cuenta.setVersionAcceso(cuenta.getVersionAcceso() + 1);
+        });
+        usuarios.saveAll(cuentas);
     }
 
     private Sede buscar(Long empresaId, Long id) {

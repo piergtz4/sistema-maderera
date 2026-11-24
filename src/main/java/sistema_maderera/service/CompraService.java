@@ -31,11 +31,12 @@ public class CompraService {
     private final EmpresaRepository empresas;
     private final ValidacionService validacion;
     private final Clock clock;
+    private final AccesoSedeService accesos;
     @PersistenceContext private EntityManager entityManager;
 
     public CompraService(CompraRepository compras, ProveedorService proveedores, ProductoRepository productos,
             InventarioRepository inventarios, MovimientoInventarioRepository movimientos, UsuarioRepository usuarios,
-            SedeRepository sedes, EmpresaRepository empresas, ValidacionService validacion, Clock clock) {
+            SedeRepository sedes, EmpresaRepository empresas, ValidacionService validacion, Clock clock, AccesoSedeService accesos) {
         this.compras = compras;
         this.proveedores = proveedores;
         this.productos = productos;
@@ -46,6 +47,7 @@ public class CompraService {
         this.empresas = empresas;
         this.validacion = validacion;
         this.clock = clock;
+        this.accesos = accesos;
     }
 
     public List<Compra> listar(Long sedeId) { return compras.findBySedeIdOrderByActualizadoDescIdDesc(sedeId); }
@@ -240,8 +242,9 @@ public class CompraService {
                 .filter(s -> s.getEmpresa().getId().equals(usuario.getEmpresa().getId()) && s.getEstado())
                 .orElseThrow(() -> new ReglaNegocioException("Selecciona una sede activa de tu empresa."));
         boolean general = "ADMINISTRADOR_GENERAL".equals(usuario.getRol());
-        boolean local = "ADMINISTRADOR".equals(usuario.getRol()) && usuario.getSede() != null && usuario.getSede().getId().equals(sedeId);
+        boolean local = List.of("ADMINISTRADOR", "CONTADOR").contains(usuario.getRol());
         if (!usuario.getEstado() || !usuario.getEmpresa().getEstado() || !(general || local)) throw new ReglaNegocioException("No tienes permiso para registrar compras en esta sede.");
+        accesos.exigirGestion(usuario, sedeId);
         return sede;
     }
 }

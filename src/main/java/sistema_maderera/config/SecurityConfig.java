@@ -12,6 +12,9 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import sistema_maderera.security.SesionVigenteFilter;
 import sistema_maderera.service.UsuarioService;
+import sistema_maderera.service.SedeContexto;
+import sistema_maderera.service.AccesoSedeService;
+import sistema_maderera.security.GestionSedeFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -21,7 +24,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, UsuarioService usuarios)
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UsuarioService usuarios, SedeContexto sedes, AccesoSedeService accesos)
             throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
@@ -32,11 +35,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/clientes/*/estado").hasRole("ADMINISTRADOR_GENERAL")
                 .requestMatchers(HttpMethod.POST, "/proveedores/*/estado").hasRole("ADMINISTRADOR_GENERAL")
                 .requestMatchers("/compras", "/compras/**", "/proveedores", "/proveedores/**")
-                    .hasAnyRole("ADMINISTRADOR_GENERAL", "ADMINISTRADOR")
+                    .hasAnyRole("ADMINISTRADOR_GENERAL", "ADMINISTRADOR", "CONTADOR")
                 .requestMatchers("/clientes", "/clientes/**", "/ventas", "/ventas/**")
                     .hasAnyRole("ADMINISTRADOR_GENERAL", "ADMINISTRADOR")
                 .requestMatchers("/transferencias", "/transferencias/**").hasRole("ADMINISTRADOR_GENERAL")
-                .requestMatchers("/seleccionar-sede", "/sede-trabajo").hasRole("ADMINISTRADOR_GENERAL")
+                .requestMatchers("/seleccionar-sede", "/sede-trabajo").hasAnyRole("ADMINISTRADOR_GENERAL", "ADMINISTRADOR", "CONTADOR")
                 .requestMatchers(HttpMethod.POST, "/productos/*/inventario")
                     .hasAnyRole("ADMINISTRADOR_GENERAL", "ADMINISTRADOR")
                 .requestMatchers(HttpMethod.POST, "/categorias/**", "/productos/**")
@@ -48,7 +51,7 @@ public class SecurityConfig {
                 .requestMatchers("/productos/editar/**")
                     .hasAnyRole("ADMINISTRADOR_GENERAL", "ADMINISTRADOR")
                 .anyRequest().hasAnyRole(
-                    "ADMINISTRADOR_GENERAL", "ADMINISTRADOR", "CONSULTA"))
+                    "ADMINISTRADOR_GENERAL", "ADMINISTRADOR", "CONTADOR"))
             .userDetailsService(usuarios)
             .exceptionHandling(errors -> errors
                 .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/")))
@@ -74,6 +77,7 @@ public class SecurityConfig {
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID"));
         http.addFilterBefore(new SesionVigenteFilter(usuarios), AuthorizationFilter.class);
+        http.addFilterAfter(new GestionSedeFilter(sedes, accesos), AuthorizationFilter.class);
         return http.build();
     }
 }

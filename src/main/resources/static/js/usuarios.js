@@ -1,14 +1,27 @@
 const rol = document.getElementById("rol");
-const sede = document.getElementById("sedeId");
-const opcionSede = sede.options[0];
+const permisos = document.getElementById("permisosSedes");
+const accesoGeneral = document.getElementById("accesoGeneral");
 
 function actualizarSede() {
     const general = rol.value === "ADMINISTRADOR_GENERAL";
-    opcionSede.textContent = general ? "Todas" : "Selecciona una sede";
-    sede.disabled = general;
-    sede.required = !general;
-    if (general) sede.value = "";
+    permisos.hidden = general;
+    accesoGeneral.hidden = !general;
+    permisos.querySelectorAll('tbody tr').forEach(fila => {
+        const consulta = fila.querySelector('[name="sedeIds"]');
+        const gestion = fila.querySelector('[name="sedesGestionIds"]');
+        consulta.disabled = general;
+        gestion.disabled = general || !consulta.checked;
+    });
 }
+
+permisos.querySelectorAll('tbody tr').forEach(fila => {
+    const consulta = fila.querySelector('[name="sedeIds"]');
+    const gestion = fila.querySelector('[name="sedesGestionIds"]');
+    consulta.addEventListener('change', () => {
+        if (!consulta.checked) gestion.checked = false;
+        actualizarSede();
+    });
+});
 
 rol.addEventListener("change", actualizarSede);
 actualizarSede();

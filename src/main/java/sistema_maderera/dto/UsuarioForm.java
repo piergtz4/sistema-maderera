@@ -3,6 +3,8 @@ package sistema_maderera.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UsuarioForm {
     private Long id;
@@ -19,6 +21,10 @@ public class UsuarioForm {
     @NotBlank(message = "Rol: Campo obligatorio.")
     private String rol;
     private Long sedeId;
+    @Size(max = 999, message = "Selecciona como máximo 999 sedes.")
+    private List<Long> sedeIds = new ArrayList<>();
+    @Size(max = 999, message = "Selecciona como máximo 999 sedes.")
+    private List<Long> sedesGestionIds = new ArrayList<>();
 
     @Size(max = 72, message = "Contraseña: Máximo 72 caracteres.")
     private String password;
@@ -35,6 +41,10 @@ public class UsuarioForm {
     public void setRol(String rol) { this.rol = rol; }
     public Long getSedeId() { return sedeId; }
     public void setSedeId(Long sedeId) { this.sedeId = sedeId; }
+    public List<Long> getSedeIds() { return sedeIds; }
+    public void setSedeIds(List<Long> sedeIds) { this.sedeIds = sedeIds; }
+    public List<Long> getSedesGestionIds() { return sedesGestionIds; }
+    public void setSedesGestionIds(List<Long> sedesGestionIds) { this.sedesGestionIds = sedesGestionIds; }
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
     public String getConfirmarPassword() { return confirmarPassword; }

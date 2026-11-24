@@ -12,17 +12,20 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import sistema_maderera.security.UsuarioPrincipal;
 import sistema_maderera.service.EmpresaService;
 import sistema_maderera.service.SedeContexto;
+import sistema_maderera.service.AccesoSedeService;
 
 @ControllerAdvice
 public class DatosUsuarioAdvice {
     private final Clock clock;
     private final EmpresaService empresas;
     private final SedeContexto sedes;
+    private final AccesoSedeService accesos;
 
-    public DatosUsuarioAdvice(Clock clock, EmpresaService empresas, SedeContexto sedes) {
+    public DatosUsuarioAdvice(Clock clock, EmpresaService empresas, SedeContexto sedes, AccesoSedeService accesos) {
         this.clock = clock;
         this.empresas = empresas;
         this.sedes = sedes;
+        this.accesos = accesos;
     }
 
     @ModelAttribute
@@ -40,10 +43,15 @@ public class DatosUsuarioAdvice {
             model.addAttribute("esAdministradorGeneral", general);
             model.addAttribute("esAdministrador", general || administradorSede);
             model.addAttribute("puedeEditarCatalogo", general);
-            model.addAttribute("puedeOperarInventario", general || administradorSede);
             model.addAttribute("empresaNombre", empresas.nombre(datos.empresaId()));
             model.addAttribute("empresaTieneLogo", empresas.tieneLogo(datos.empresaId()));
             var sede = sedes.actual(usuario, request.getSession(false)).orElse(null);
+            boolean gestion = general || sede != null && accesos.puedeGestionar(usuario, sede.getId());
+            model.addAttribute("puedeVerCompras", general || administradorSede || "CONTADOR".equals(datos.rol()));
+            model.addAttribute("puedeGestionarCompras", gestion);
+            model.addAttribute("puedeGestionarVentas", (general || administradorSede) && gestion);
+            model.addAttribute("puedeOperarInventario", (general || administradorSede) && gestion);
+            model.addAttribute("puedeCambiarSede", sedes.disponibles(usuario).size() > 1);
             model.addAttribute("sedeId", sede == null ? null : sede.getId());
             model.addAttribute("sedeNombre", sede == null ? "Sin sede seleccionada" : sede.getNombre());
             model.addAttribute("sedeDepartamento", sede == null ? "" : sede.getDepartamento());
@@ -56,7 +64,7 @@ public class DatosUsuarioAdvice {
         return switch (rol) {
             case "ADMINISTRADOR_GENERAL" -> "Administrador general";
             case "ADMINISTRADOR" -> "Administrador de sede";
-            case "CONSULTA" -> "Consulta";
+            case "CONTADOR" -> "Contador";
             default -> rol;
         };
     }

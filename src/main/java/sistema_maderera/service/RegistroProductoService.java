@@ -31,16 +31,18 @@ public class RegistroProductoService {
     private final ValidacionService validacion;
     private final SedeRepository sedes;
     private final UsuarioRepository usuarios;
+    private final AccesoSedeService accesos;
 
     public RegistroProductoService(ProductoService productos, InventarioService inventarios,
             InventarioRepository inventarioRepository, ValidacionService validacion,
-            SedeRepository sedes, UsuarioRepository usuarios) {
+            SedeRepository sedes, UsuarioRepository usuarios, AccesoSedeService accesos) {
         this.productos = productos;
         this.inventarios = inventarios;
         this.inventarioRepository = inventarioRepository;
         this.validacion = validacion;
         this.sedes = sedes;
         this.usuarios = usuarios;
+        this.accesos = accesos;
     }
 
     @Transactional(readOnly = true)
@@ -141,9 +143,9 @@ public class RegistroProductoService {
         Sede sede = sedeActiva(sedeId);
         Usuario usuario = usuarios.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));
+        accesos.exigirGestion(usuario, sedeId);
         boolean general = "ADMINISTRADOR_GENERAL".equals(usuario.getRol());
-        boolean local = "ADMINISTRADOR".equals(usuario.getRol()) && usuario.getSede() != null
-                && usuario.getSede().getId().equals(sedeId);
+        boolean local = "ADMINISTRADOR".equals(usuario.getRol());
         if (!Boolean.TRUE.equals(usuario.getEstado())
                 || !usuario.getEmpresa().getId().equals(sede.getEmpresa().getId()) || !(general || local)) {
             throw new ReglaNegocioException("El usuario no puede operar en esta sede.");

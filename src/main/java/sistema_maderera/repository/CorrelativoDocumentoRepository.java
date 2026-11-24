@@ -6,6 +6,7 @@ import sistema_maderera.entity.CorrelativoDocumento;
 import sistema_maderera.entity.TipoDocumentoVenta;
 
 public interface CorrelativoDocumentoRepository extends JpaRepository<CorrelativoDocumento, Long> {
+    boolean existsBySedeId(Long sedeId);
     boolean existsBySedeIdAndUltimoGreaterThan(Long sedeId, Long ultimo);
     Optional<CorrelativoDocumento> findBySedeIdAndTipo(Long sedeId, TipoDocumentoVenta tipo);
 }

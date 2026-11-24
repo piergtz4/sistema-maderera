@@ -161,7 +161,8 @@ class SedeIntegrationTests {
         assertThat(sedes.findById(ica.getId()).orElseThrow().getEstado()).isFalse();
         assertThat(inventarios.findById(registro.getId()).orElseThrow().getStock()).isEqualByComparingTo("7");
         assertThat(movimientos.count()).isEqualTo(1);
-        mvc.perform(get("/dashboard").session(sesion)).andExpect(redirectedUrl("/seleccionar-sede"));
+        mvc.perform(get("/dashboard").session(sesion)).andExpect(status().isOk())
+                .andExpect(model().attribute("sedeNombre", "Sede Parcona"));
         assertThat(sesion.getAttribute("sedeTrabajoId")).isNull();
         mvc.perform(post("/sedes/{id}/estado", ica.getId()).session(sesion).with(csrf()))
                 .andExpect(redirectedUrl("/sedes"));

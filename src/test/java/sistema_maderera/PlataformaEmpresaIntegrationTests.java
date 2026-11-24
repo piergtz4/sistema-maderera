@@ -125,7 +125,7 @@ class PlataformaEmpresaIntegrationTests {
         assertThat(productos.findByEmpresaIdOrderByNombreAsc(empresa.getId())).isEmpty();
     }
 
-    // La cuenta nueva ingresa al sistema y selecciona su propia sede.
+    // La cuenta nueva ingresa directamente cuando tiene una sola sede activa.
     @Test
     void permiteIngresoDelAdministradorNuevo() throws Exception {
         var empresa = servicio.crear(formulario());
@@ -134,11 +134,12 @@ class PlataformaEmpresaIntegrationTests {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
                 .andReturn().getRequest().getSession(false);
         mvc.perform(get("/seleccionar-sede").session(sesion))
-                .andExpect(status().isOk()).andExpect(content().string(containsString("Local principal")));
+                .andExpect(redirectedUrl("/dashboard"));
         var sede = sedes.findByEmpresaIdAndCodigoDocumentos(empresa.getId(), 1).orElseThrow();
         mvc.perform(post("/sede-trabajo").session(sesion).with(csrf())
                 .param("sedeId", sede.getId().toString())).andExpect(redirectedUrl("/dashboard"));
-        mvc.perform(get("/dashboard").session(sesion)).andExpect(status().isOk());
+        mvc.perform(get("/dashboard").session(sesion)).andExpect(status().isOk())
+                .andExpect(model().attribute("sedeNombre", "Local principal"));
         mvc.perform(get("/productos").session(sesion)).andExpect(status().isOk());
         mvc.perform(get("/plataforma/empresas/nueva").session(sesion)).andExpect(status().isForbidden());
     }

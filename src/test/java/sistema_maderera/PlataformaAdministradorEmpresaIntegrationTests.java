@@ -151,16 +151,16 @@ class PlataformaAdministradorEmpresaIntegrationTests {
     // Incluye los tres roles y las cuentas inactivas, con su sede y estado.
     @Test
     void muestraTodosLosRolesConSuSedeYEstado() throws Exception {
-        var consulta = cuenta("empresa.a.consulta", "Consulta de prueba", "CONSULTA");
+        var consulta = cuenta("empresa.a.consulta", "Consulta de prueba", "CONTADOR");
         consulta.setEstado(false);
         mvc.perform(get(base()).with(user(actor))).andExpect(status().isOk())
                 .andExpect(model().attribute("usuariosEmpresa", hasSize(4)))
                 .andExpect(model().attribute("usuariosEmpresa", hasItem(new UsuarioVista(
-                        "Consulta de prueba", "empresa.a.consulta", "Consulta", "Sede de Empresa administrada A", false))))
+                        "Consulta de prueba", "empresa.a.consulta", "Contador", "Sede de Empresa administrada A · Consulta", false))))
                 .andExpect(model().attribute("usuariosEmpresa", hasItem(new UsuarioVista(
-                        administrador.getNombre(), "empresa.a.admin", "Administrador general", "Sin sede fija", true))))
+                        administrador.getNombre(), "empresa.a.admin", "Administrador general", "Todas las sedes", true))))
                 .andExpect(model().attribute("usuariosEmpresa", hasItem(new UsuarioVista(
-                        local.getNombre(), "empresa.a.local", "Administrador de sede", "Sede de Empresa administrada A", true))))
+                        local.getNombre(), "empresa.a.local", "Administrador de sede", "Sede de Empresa administrada A · Gestión", true))))
                 .andExpect(content().string(containsString("Inactivo")))
                 .andExpect(content().string(not(containsString("empresa.b.admin"))))
                 .andExpect(content().string(not(containsString(consulta.getPassword()))));

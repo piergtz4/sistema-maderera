@@ -58,7 +58,7 @@ class UsuarioIntegrationTests {
         ica = sede(empresa, "Sede Ica");
         admin = usuario(empresa, "admin", "ADMINISTRADOR_GENERAL", null);
         local = usuario(empresa, "local", "ADMINISTRADOR", parcona);
-        consulta = usuario(empresa, "consulta", "CONSULTA", parcona);
+        consulta = usuario(empresa, "consulta", "CONTADOR", parcona);
         sesionAdmin = autenticar("admin", "ClaveDePrueba1");
     }
 
@@ -110,7 +110,7 @@ class UsuarioIntegrationTests {
                 .andExpect(status().isOk()).andExpect(content().string(not(containsString(hash))));
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("id", maria.getId().toString()).param("nombre", "María Pérez")
-                .param("usuario", "maria.ica").param("rol", "CONSULTA")
+                .param("usuario", "maria.ica").param("rol", "CONTADOR")
                 .param("sedeId", ica.getId().toString()))
                 .andExpect(redirectedUrl("/usuarios"));
         assertThat(usuarios.findById(maria.getId()).orElseThrow().getPassword()).isEqualTo(hash);
@@ -126,21 +126,21 @@ class UsuarioIntegrationTests {
                 .andExpect(status().isOk()).andExpect(content().string(containsString("ya está registrado")));
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("nombre", "Sin sede").param("usuario", "sin.sede")
-                .param("rol", "CONSULTA").param("password", "ClaveSegura2")
+                .param("rol", "CONTADOR").param("password", "ClaveSegura2")
                 .param("confirmarPassword", "ClaveSegura2"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("Selecciona una sede")));
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("nombre", "Sin clave").param("usuario", "sin.clave")
-                .param("rol", "ADMINISTRADOR_GENERAL"))
+                .param("rol", "ADMINISTRADOR").param("sedeId", parcona.getId().toString()))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("al menos 12 caracteres")));
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("nombre", "Clave simple").param("usuario", "clave.simple")
-                .param("rol", "ADMINISTRADOR_GENERAL").param("password", "123456789012")
+                .param("rol", "ADMINISTRADOR").param("sedeId", parcona.getId().toString()).param("password", "123456789012")
                 .param("confirmarPassword", "123456789012"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("letras y números")));
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("nombre", "Distintas").param("usuario", "distintas")
-                .param("rol", "ADMINISTRADOR_GENERAL").param("password", "ClaveSegura2")
+                .param("rol", "ADMINISTRADOR").param("sedeId", parcona.getId().toString()).param("password", "ClaveSegura2")
                 .param("confirmarPassword", "OtraClave2"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("no coinciden")));
         assertThat(usuarios.count()).isEqualTo(3);
@@ -153,7 +153,7 @@ class UsuarioIntegrationTests {
                 .andExpect(model().attribute("sedeNombre", "Sede Parcona"));
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("id", local.getId().toString()).param("nombre", "local")
-                .param("usuario", "local").param("rol", "CONSULTA")
+                .param("usuario", "local").param("rol", "CONTADOR")
                 .param("sedeId", ica.getId().toString()))
                 .andExpect(redirectedUrl("/usuarios"));
         mvc.perform(get("/inventario").session(sesionLocal)).andExpect(redirectedUrl("/?sesion"));
@@ -169,7 +169,7 @@ class UsuarioIntegrationTests {
         MockHttpSession sesionConsulta = autenticar("consulta", "ClaveDePrueba1");
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("id", consulta.getId().toString()).param("nombre", "consulta")
-                .param("usuario", "consulta").param("rol", "CONSULTA")
+                .param("usuario", "consulta").param("rol", "CONTADOR")
                 .param("sedeId", parcona.getId().toString())
                 .param("password", "ClaveNueva2026").param("confirmarPassword", "ClaveNueva2026")
                 .param("claveAdministrador", "ClaveDePrueba1"))
@@ -235,8 +235,8 @@ class UsuarioIntegrationTests {
         String hash = usuarios.findById(admin.getId()).orElseThrow().getPassword();
         mvc.perform(get("/usuarios/{id}/editar", admin.getId()).session(sesionAdmin))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Todas")))
-                .andExpect(content().string(containsString("disabled")))
+                .andExpect(content().string(containsString("todas las sedes")))
+                .andExpect(content().string(containsString("id=\"permisosSedes\" hidden")))
                 .andExpect(content().string(containsString("Mi cuenta")))
                 .andExpect(content().string(not(containsString("name=\"password\""))))
                 .andExpect(content().string(not(containsString("name=\"confirmarPassword\""))));
@@ -258,7 +258,7 @@ class UsuarioIntegrationTests {
                 .andExpect(flash().attribute("error", "No puedes desactivar tu propia cuenta."));
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("id", admin.getId().toString()).param("nombre", "admin")
-                .param("usuario", "admin").param("rol", "CONSULTA")
+                .param("usuario", "admin").param("rol", "CONTADOR")
                 .param("sedeId", parcona.getId().toString()))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("propio acceso")));
         mvc.perform(post("/usuarios/{id}/estado", local.getId()).session(sesionAdmin).with(csrf()))
@@ -292,20 +292,15 @@ class UsuarioIntegrationTests {
     }
 
     @Test
-    void segundoAdministradorGeneralPuedeReasignarAlPrimeroSinPerderAdministracion() throws Exception {
+    void empresaNoPermiteCrearSegundoAdministradorGeneral() throws Exception {
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("nombre", "Segundo administrador").param("usuario", "admin.dos")
                 .param("rol", "ADMINISTRADOR_GENERAL").param("password", "ClaveSegura2")
                 .param("confirmarPassword", "ClaveSegura2"))
-                .andExpect(redirectedUrl("/usuarios"));
-        MockHttpSession segundo = autenticar("admin.dos", "ClaveSegura2");
-        mvc.perform(post("/usuarios/guardar").session(segundo).with(csrf())
-                .param("id", admin.getId().toString()).param("nombre", "admin")
-                .param("usuario", "admin").param("rol", "CONSULTA")
-                .param("sedeId", parcona.getId().toString()))
-                .andExpect(redirectedUrl("/usuarios"));
-        mvc.perform(get("/usuarios").session(sesionAdmin)).andExpect(redirectedUrl("/?sesion"));
-        mvc.perform(get("/usuarios").session(segundo)).andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("ya tiene un administrador general")));
+        assertThat(usuarios.findByUsuario("admin.dos")).isEmpty();
+        mvc.perform(get("/usuarios").session(sesionAdmin)).andExpect(status().isOk());
         assertThat(usuarios.countByEmpresaIdAndRolAndEstadoTrue(empresa.getId(), "ADMINISTRADOR_GENERAL"))
                 .isEqualTo(1);
     }
@@ -316,14 +311,14 @@ class UsuarioIntegrationTests {
         otra.setNombreComercial("Otra empresa");
         otra = empresas.save(otra);
         Sede ajena = sede(otra, "Sede ajena");
-        Usuario ajeno = usuario(otra, "ajeno", "CONSULTA", ajena);
+        Usuario ajeno = usuario(otra, "ajeno", "CONTADOR", ajena);
         mvc.perform(get("/usuarios/{id}/editar", ajeno.getId()).session(sesionAdmin))
                 .andExpect(status().isNotFound());
         mvc.perform(post("/usuarios/{id}/estado", ajeno.getId()).session(sesionAdmin).with(csrf()))
                 .andExpect(status().isNotFound());
         mvc.perform(post("/usuarios/guardar").session(sesionAdmin).with(csrf())
                 .param("nombre", "Intruso").param("usuario", "intruso")
-                .param("rol", "CONSULTA").param("sedeId", ajena.getId().toString())
+                .param("rol", "CONTADOR").param("sedeId", ajena.getId().toString())
                 .param("password", "ClaveSegura2").param("confirmarPassword", "ClaveSegura2"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("sede activa de tu empresa")));
         MockHttpSession sesionLocal = autenticar("local", "ClaveDePrueba1");

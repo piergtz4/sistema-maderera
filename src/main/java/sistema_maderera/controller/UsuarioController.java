@@ -33,6 +33,8 @@ public class UsuarioController {
     @GetMapping
     public String listar(@AuthenticationPrincipal UsuarioPrincipal actor, Model model) {
         model.addAttribute("cuentas", usuarios.listar(actor.getDatos().empresaId()));
+        model.addAttribute("descripcionesSedes", usuarios.descripcionesSedes(actor.getDatos().empresaId()));
+        model.addAttribute("cuentasConSedeActiva", usuarios.cuentasConSedeActiva(actor.getDatos().empresaId()));
         return "usuarios";
     }
 
@@ -82,6 +84,36 @@ public class UsuarioController {
             flash.addFlashAttribute("mensaje", activo ? "Usuario activado." : "Usuario desactivado.");
         } catch (ReglaNegocioException e) {
             flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/usuarios";
+    }
+
+    @GetMapping("/{id}/eliminar")
+    public String confirmarEliminacion(@AuthenticationPrincipal UsuarioPrincipal actor, @PathVariable Long id,
+            Model model, RedirectAttributes flash) {
+        try {
+            model.addAttribute("nombreRegistro", usuarios.nombreParaEliminar(actor.getDatos().empresaId(), actor.getDatos().usuarioId(), id));
+            model.addAttribute("tipoRegistro", "usuario");
+            model.addAttribute("accionEliminar", "/usuarios/" + id + "/eliminar");
+            model.addAttribute("volver", "/usuarios");
+            model.addAttribute("efectoEliminacion", "La cuenta y sus permisos de acceso se borrarán definitivamente. Solo puedes eliminarla si no tiene movimientos, compras ni ventas asociados. Su nombre de usuario volverá a estar disponible.");
+            return "eliminar-registro";
+        } catch (ReglaNegocioException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+            return "redirect:/usuarios";
+        }
+    }
+
+    @PostMapping("/{id}/eliminar")
+    public String eliminar(@AuthenticationPrincipal UsuarioPrincipal actor, @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean confirmar, RedirectAttributes flash) {
+        try {
+            usuarios.eliminar(actor.getDatos().empresaId(), actor.getDatos().usuarioId(), id, confirmar);
+            flash.addFlashAttribute("mensaje", "Usuario eliminado correctamente.");
+        } catch (ReglaNegocioException e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            flash.addFlashAttribute("error", "No se pudo eliminar el usuario porque tiene registros asociados. Actualiza la lista para revisarlo.");
         }
         return "redirect:/usuarios";
     }

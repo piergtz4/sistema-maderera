@@ -30,10 +30,11 @@ public class PlataformaAdministradorEmpresaService {
     private final PasswordEncoder encoder;
     private final ValidacionService validacion;
     private final PoliticaContrasenaService contrasenas;
+    private final AccesoSedeService accesos;
 
     public PlataformaAdministradorEmpresaService(EmpresaRepository empresas, UsuarioRepository usuarios,
             AdministradorPlataformaRepository plataforma, UsuarioGestionService gestionUsuarios,
-            PasswordEncoder encoder, ValidacionService validacion, PoliticaContrasenaService contrasenas) {
+            PasswordEncoder encoder, ValidacionService validacion, PoliticaContrasenaService contrasenas, AccesoSedeService accesos) {
         this.empresas = empresas;
         this.usuarios = usuarios;
         this.plataforma = plataforma;
@@ -41,6 +42,7 @@ public class PlataformaAdministradorEmpresaService {
         this.encoder = encoder;
         this.validacion = validacion;
         this.contrasenas = contrasenas;
+        this.accesos = accesos;
     }
 
     public List<AdministradorVista> listar(Long empresaId) {
@@ -52,8 +54,7 @@ public class PlataformaAdministradorEmpresaService {
     public List<UsuarioVista> listarUsuarios(Long empresaId) {
         return usuarios.findByEmpresaIdOrderByNombreAsc(empresaId).stream()
                 .map(u -> new UsuarioVista(u.getNombre(), u.getUsuario(), etiquetaRol(u.getRol()),
-                        u.getSede() != null ? u.getSede().getNombre()
-                                : GENERAL.equals(u.getRol()) ? "Sin sede fija" : "Sin sede asignada",
+                        accesos.descripcion(u),
                         Boolean.TRUE.equals(u.getEstado())))
                 .toList();
     }
@@ -136,7 +137,7 @@ public class PlataformaAdministradorEmpresaService {
         return switch (rol) {
             case GENERAL -> "Administrador general";
             case "ADMINISTRADOR" -> "Administrador de sede";
-            case "CONSULTA" -> "Consulta";
+            case "CONTADOR" -> "Contador";
             default -> rol;
         };
     }

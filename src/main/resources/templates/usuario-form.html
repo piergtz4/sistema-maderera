@@ -8,7 +8,7 @@
         <header th:replace="~{fragments/layout :: topbar('Datos del usuario', 'Define su cuenta, rol y sede')}"></header>
         <section class="dashboard-content">
             <section class="dashboard-card form-card">
-                <div class="card-header"><div><h2 th:text="${cuenta.id == null ? 'Nuevo usuario' : 'Editar usuario'}"></h2><p>El administrador general trabaja en una sede que elige al ingresar.</p></div></div>
+                <div class="card-header"><div><h2 th:text="${cuenta.id == null ? 'Nuevo usuario' : 'Editar usuario'}"></h2><p>Define su rol y las sedes donde puede trabajar.</p></div></div>
                 <form class="edit-form" th:action="@{/usuarios/guardar}" th:object="${cuenta}" method="post">
                     <input type="hidden" th:field="*{id}">
                     <div class="notice error" th:if="${#fields.hasErrors('*')}" role="alert">
@@ -19,19 +19,29 @@
                         <label>Usuario de ingreso<input th:field="*{usuario}" required maxlength="50" autocomplete="off" placeholder="Ejemplo: maria.ica"></label>
                         <label>Rol<select id="rol" th:field="*{rol}" required>
                             <option value="">Selecciona un rol</option>
-                            <option value="ADMINISTRADOR_GENERAL">Administrador general</option>
+                            <option th:if="${cuenta.rol == 'ADMINISTRADOR_GENERAL'}" value="ADMINISTRADOR_GENERAL">Administrador general</option>
                             <option value="ADMINISTRADOR">Administrador de sede</option>
-                            <option value="CONSULTA">Consulta de sede</option>
-                        </select></label>
-                        <label>Sede<select id="sedeId" th:field="*{sedeId}" th:disabled="${cuenta.rol == 'ADMINISTRADOR_GENERAL'}" th:required="${cuenta.rol != 'ADMINISTRADOR_GENERAL'}">
-                            <option value="" th:text="${cuenta.rol == 'ADMINISTRADOR_GENERAL' ? 'Todas' : 'Selecciona una sede'}">Selecciona una sede</option>
-                            <option th:each="s : ${sedes}" th:value="${s.id}" th:text="${s.nombre}"></option>
+                            <option value="CONTADOR">Contador</option>
                         </select></label>
                         <label th:if="${cuenta.id == null or cuenta.id != usuarioId}"><span th:text="${cuenta.id == null ? 'Contraseña inicial' : 'Restablecer contraseña'}">Contraseña</span><input name="password" type="password" minlength="12" maxlength="72" autocomplete="new-password" th:required="${cuenta.id == null}"><span class="help">Mínimo 12 caracteres, con letras y números.<span th:if="${cuenta.id != null}"> Deja vacío para conservar la actual.</span></span></label>
                         <label th:if="${cuenta.id == null or cuenta.id != usuarioId}">Confirmar contraseña<input name="confirmarPassword" type="password" autocomplete="new-password" th:required="${cuenta.id == null}"></label>
                         <label th:if="${cuenta.id != null and cuenta.id != usuarioId}">Tu contraseña de administrador<input id="claveAdministrador" name="claveAdministrador" type="password" autocomplete="current-password"><span class="help">Solo se necesita para restablecer la contraseña de este usuario. Su contraseña actual no se puede ver.</span></label>
                         <p class="help full-width" th:if="${cuenta.id != null and cuenta.id == usuarioId}">Para cambiar tu contraseña, ve a <a th:href="@{/mi-cuenta}">Mi cuenta</a>. Allí se solicita la contraseña actual.</p>
                     </div>
+                    <section id="permisosSedes" th:hidden="${cuenta.rol == 'ADMINISTRADOR_GENERAL'}">
+                        <h3>Sedes autorizadas</h3>
+                        <p class="help">Consulta permite ver información. Gestión también permite registrar y editar según su rol. El contador gestiona compras y proveedores; no realiza ventas ni ajustes manuales de stock.</p>
+                        <div class="table-container"><table>
+                            <thead><tr><th>Sede</th><th>Consulta</th><th>Gestión</th></tr></thead>
+                            <tbody><tr th:each="s : ${sedes}">
+                                <td th:text="${s.nombre}"></td>
+                                <td><input type="checkbox" name="sedeIds" th:value="${s.id}" th:checked="${#lists.contains(cuenta.sedeIds, s.id)}" th:attr="aria-label=${'Consultar ' + s.nombre}"></td>
+                                <td><input type="checkbox" name="sedesGestionIds" th:value="${s.id}" th:checked="${#lists.contains(cuenta.sedesGestionIds, s.id)}" th:attr="aria-label=${'Gestionar ' + s.nombre}"></td>
+                            </tr></tbody>
+                        </table></div>
+                        <p th:if="${#lists.isEmpty(sedes)}" class="help">Primero registra una sede activa.</p>
+                    </section>
+                    <p id="accesoGeneral" class="help" th:hidden="${cuenta.rol != 'ADMINISTRADOR_GENERAL'}">El administrador general tiene gestión sobre todas las sedes de su empresa.</p>
                     <div class="form-actions"><a class="secondary-button" th:href="@{/usuarios}">Cancelar</a><button class="primary-button" type="submit">Guardar usuario</button></div>
                 </form>
             </section>

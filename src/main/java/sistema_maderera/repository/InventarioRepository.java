@@ -21,6 +21,7 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
     List<Inventario> listarSedesRegistradas(Long empresaId);
 
     boolean existsByProductoIdAndSedeId(Long productoId, Long sedeId);
+    boolean existsBySedeId(Long sedeId);
 
     Optional<Inventario> findByProductoIdAndSedeId(Long productoId, Long sedeId);
 

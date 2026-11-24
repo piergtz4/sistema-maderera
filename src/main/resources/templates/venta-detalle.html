@@ -49,10 +49,10 @@
                     </section>
                     <p th:if="${venta.estado.name() != 'BORRADOR' and venta.tipo.name() != 'COTIZACION'}" class="documento-cobro">Cobro vigente: <strong>S/ <span th:text="${venta.cobroVigente.setScale(2)}"></span></strong></p>
                     </section>
-                    <div th:if="${venta.estado.name() == 'BORRADOR'}">
+                    <div th:if="${puedeGestionarVentas and venta.estado.name() == 'BORRADOR'}">
                         <details th:replace="~{fragments/descartar-venta :: confirmacion(${venta.id}, ${venta.version})}"></details>
                     </div>
-                    <details class="anulacion-venta" th:if="${venta.estado.name() == 'CONFIRMADO'}">
+                    <details class="anulacion-venta" th:if="${puedeGestionarVentas and venta.estado.name() == 'CONFIRMADO'}">
                         <summary>Anular venta</summary>
                         <form class="edit-form" th:action="@{/ventas/{id}/anular(id=${venta.id})}" method="post">
                             <input type="hidden" name="version" th:value="${venta.version}">
@@ -64,23 +64,23 @@
                     <p th:if="${venta.tipo.name() == 'COTIZACION'}" class="help">La cotización no reserva existencias ni registra cobros. Al emitirla obtiene su número definitivo y ya no puede editarse.</p>
                     <section th:if="${venta.estado.name() == 'EMITIDO' and venta.tipo.name() == 'COTIZACION'}">
                         <p th:if="${ventaVinculada != null}">Ya existe una venta vinculada: <a th:href="@{/ventas/{id}(id=${ventaVinculada.id})}" th:text="${ventaVinculada.codigoDocumento + ' · ' + ventaVinculada.estado}"></a>.</p>
-                        <form class="edit-form" th:if="${ventaVinculada == null}" th:action="@{/ventas/{id}/convertir(id=${venta.id})}" method="post">
+                        <form class="edit-form" th:if="${puedeGestionarVentas and ventaVinculada == null}" th:action="@{/ventas/{id}/convertir(id=${venta.id})}" method="post">
                             <input type="hidden" name="version" th:value="${venta.version}">
                             <label>Convertir a<select name="tipo"><option value="BOLETA">Boleta</option><option value="FACTURA">Factura</option><option value="NOTA_VENTA">Nota de venta</option></select></label>
                             <div class="form-actions"><button class="primary-button" type="submit">Convertir a venta</button></div>
                         </form>
                     </section>
-                    <div class="form-actions"><a class="secondary-button" th:href="@{/ventas}">Volver</a><a class="secondary-button" th:if="${venta.estado.name() == 'BORRADOR'}" th:href="@{/ventas/{id}/editar(id=${venta.id})}">Corregir datos</a>
-                        <form th:if="${venta.estado.name() == 'BORRADOR' and venta.tipo.name() == 'COTIZACION'}" th:action="@{/ventas/{id}/emitir-cotizacion(id=${venta.id})}" method="post">
+                    <div class="form-actions"><a class="secondary-button" th:href="@{/ventas}">Volver</a><a class="secondary-button" th:if="${puedeGestionarVentas and venta.estado.name() == 'BORRADOR'}" th:href="@{/ventas/{id}/editar(id=${venta.id})}">Corregir datos</a>
+                        <form th:if="${puedeGestionarVentas and venta.estado.name() == 'BORRADOR' and venta.tipo.name() == 'COTIZACION'}" th:action="@{/ventas/{id}/emitir-cotizacion(id=${venta.id})}" method="post">
                             <input type="hidden" name="version" th:value="${venta.version}">
                             <button class="primary-button" type="submit" th:disabled="${venta.total.signum() <= 0 or #lists.isEmpty(venta.lineas)}">Emitir cotización</button>
                         </form>
                         <a class="secondary-button" th:if="${venta.confirmadoEn != null}" th:href="@{/ventas/{id}/imprimir(id=${venta.id})}">Imprimir / Guardar PDF</a>
-                        <form th:if="${venta.estado.name() == 'ANULADO'}" th:action="@{/ventas/{id}/copiar(id=${venta.id})}" method="post">
+                        <form th:if="${puedeGestionarVentas and venta.estado.name() == 'ANULADO'}" th:action="@{/ventas/{id}/copiar(id=${venta.id})}" method="post">
                             <input type="hidden" name="version" th:value="${venta.version}">
                             <button class="primary-button" type="submit">Copiar datos</button>
                         </form>
-                        <form th:if="${venta.estado.name() == 'BORRADOR' and venta.tipo.name() != 'COTIZACION'}" th:action="@{/ventas/{id}/confirmar(id=${venta.id})}" method="post">
+                        <form th:if="${puedeGestionarVentas and venta.estado.name() == 'BORRADOR' and venta.tipo.name() != 'COTIZACION'}" th:action="@{/ventas/{id}/confirmar(id=${venta.id})}" method="post">
                             <input type="hidden" name="version" th:value="${venta.version}">
                             <button class="primary-button" type="submit" th:disabled="${venta.saldo.signum() > 0 or venta.total.signum() <= 0 or #lists.isEmpty(venta.lineas)}">Confirmar venta</button>
                         </form>

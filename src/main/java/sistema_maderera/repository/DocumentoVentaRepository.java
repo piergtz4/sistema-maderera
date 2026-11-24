@@ -7,6 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import sistema_maderera.entity.DocumentoVenta;
 
 public interface DocumentoVentaRepository extends JpaRepository<DocumentoVenta, Long> {
+    boolean existsBySedeId(Long sedeId);
+    @org.springframework.data.jpa.repository.Query("select count(d) from DocumentoVenta d where d.usuario.id = :usuarioId "
+            + "or d.confirmadoPor.id = :usuarioId or d.anuladoPor.id = :usuarioId")
+    long countReferenciasUsuario(Long usuarioId);
     @org.springframework.data.jpa.repository.Query("select p.medio as medio, p.banco as banco, "
             + "sum(p.aplicado - p.revertido) as monto, count(p) as pagos from PagoVenta p join p.documento d "
             + "where d.sede.id = :sedeId and d.estado = sistema_maderera.entity.EstadoDocumentoVenta.CONFIRMADO "

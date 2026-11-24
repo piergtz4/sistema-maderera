@@ -64,7 +64,7 @@ class CuposPlanIntegrationTests {
         hash = encoder.encode(CLAVE);
         general = cuenta(empresa, "dueno", "ADMINISTRADOR_GENERAL", true);
         encargado = cuenta(empresa, "encargado", "ADMINISTRADOR", true);
-        consulta = cuenta(empresa, "consulta", "CONSULTA", true);
+        consulta = cuenta(empresa, "consulta", "CONTADOR", true);
         usuarioInactivo = cuenta(empresa, "inactivo", "ADMINISTRADOR", false);
         actor = new UsuarioPrincipal(general);
     }
@@ -184,7 +184,7 @@ class CuposPlanIntegrationTests {
     void respetaLosCuposDeCadaPlan(PlanComercial plan) {
         empresa.setPlanComercial(plan); empresas.saveAndFlush(empresa);
         for (int i = 1; i < plan.getSedes(); i++) sede(empresa, "Activa " + i, true);
-        for (int i = 3; i < plan.getUsuarios(); i++) cuenta(empresa, "activo" + i, "CONSULTA", true);
+        for (int i = 3; i < plan.getUsuarios(); i++) cuenta(empresa, "activo" + i, "CONTADOR", true);
         assertThatThrownBy(() -> gestionSedes.guardar(empresa.getId(), nuevaSede("Excedente")))
                 .isInstanceOf(ReglaNegocioException.class).hasMessageContaining("ya alcanzaste ese límite");
         assertThatThrownBy(() -> gestionUsuarios.guardar(empresa.getId(), general.getId(), nuevaCuenta("excedente")))

@@ -9,7 +9,7 @@
         <section class="dashboard-content">
             <div th:replace="~{fragments/layout :: mensajes}"></div>
             <section class="dashboard-card">
-                <div class="card-header"><div><h2>Locales registrados</h2><p>Al desactivar una sede, sus usuarios también quedan inactivos. Al reabrirla, reactiva solo las cuentas necesarias desde Usuarios.</p></div>
+                <div class="card-header"><div><h2>Locales registrados</h2><p>Al desactivar una sede, las cuentas sin otra sede activa quedan inactivas. Al reabrirla, reactiva las cuentas necesarias desde Usuarios.</p></div>
                     <a class="primary-button" th:href="@{/sedes/nueva}">Nueva sede</a>
                 </div>
                 <div class="table-container"><table>
@@ -27,6 +27,7 @@
                                 <form th:action="@{/sedes/{id}/estado(id=${s.id})}" method="post">
                                     <button class="secondary-button" type="submit" th:text="${s.estado ? 'Desactivar' : 'Activar'}"></button>
                                 </form>
+                                <a class="secondary-button danger-button" th:href="@{/sedes/{id}/eliminar(id=${s.id})}">Eliminar</a>
                             </div></td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(sedes)}"><td colspan="7" class="empty">Todavía no hay sedes. Registra la primera para comenzar.</td></tr>

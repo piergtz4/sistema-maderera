@@ -28,10 +28,11 @@ public class InventarioService {
     private final UsuarioRepository usuarios;
     private final ValidacionService validacion;
     private final Clock clock;
+    private final AccesoSedeService accesos;
 
     public InventarioService(InventarioRepository inventarios, MovimientoInventarioRepository movimientos,
             ProductoService productos, SedeRepository sedes, UsuarioRepository usuarios,
-            ValidacionService validacion, Clock clock) {
+            ValidacionService validacion, Clock clock, AccesoSedeService accesos) {
         this.inventarios = inventarios;
         this.movimientos = movimientos;
         this.productos = productos;
@@ -39,6 +40,7 @@ public class InventarioService {
         this.usuarios = usuarios;
         this.validacion = validacion;
         this.clock = clock;
+        this.accesos = accesos;
     }
 
     /**
@@ -52,9 +54,14 @@ public class InventarioService {
     }
 
     public Map<Long, String> sedesRegistradasPorProducto(Long empresaId) {
+        return sedesRegistradasPorProducto(empresaId, null);
+    }
+
+    public Map<Long, String> sedesRegistradasPorProducto(Long empresaId, java.util.Set<Long> sedesAutorizadas) {
         Map<Long, String> sedesPorProducto = new HashMap<>();
         for (Inventario inventario : inventarios.listarSedesRegistradas(empresaId)) {
             Sede sede = inventario.getSede();
+            if (sedesAutorizadas != null && !sedesAutorizadas.contains(sede.getId())) continue;
             String nombre = sede.getNombre() + (sede.getEstado() ? "" : " (inactiva)");
             sedesPorProducto.merge(inventario.getProducto().getId(), nombre,
                     (anteriores, nueva) -> anteriores + ", " + nueva);
@@ -112,13 +119,13 @@ public class InventarioService {
     @Transactional
     public MovimientoInventario mover(Long sedeId, Long usuarioId, MovimientoForm form) {
         validacion.validar(form);
-        Inventario inventario = buscarParaActualizar(sedeId, form.getInventarioId());
         Usuario usuario = usuarios.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado."));
+        accesos.exigirGestion(usuario, sedeId);
+        Inventario inventario = buscarParaActualizar(sedeId, form.getInventarioId());
         boolean general = "ADMINISTRADOR_GENERAL".equals(usuario.getRol());
         boolean mismaEmpresa = usuario.getEmpresa().getId().equals(inventario.getSede().getEmpresa().getId());
-        boolean sedePermitida = general || usuario.getSede() != null
-                && usuario.getSede().getId().equals(sedeId) && usuario.getSede().getEstado();
+        boolean sedePermitida = (general || "ADMINISTRADOR".equals(usuario.getRol())) && accesos.puedeGestionar(usuario, sedeId);
         if (!mismaEmpresa || !sedePermitida || !usuario.getEstado() || !usuario.getEmpresa().getEstado()) {
             throw new ReglaNegocioException("El usuario no puede operar en esta sede.");
         }

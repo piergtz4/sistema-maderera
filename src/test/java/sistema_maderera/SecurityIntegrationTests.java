@@ -75,7 +75,7 @@ class SecurityIntegrationTests {
         sedeId = sede.getId();
         crearUsuario(empresa, "admin", "ADMINISTRADOR_GENERAL", null, true);
         crearUsuario(empresa, "operador", "ADMINISTRADOR", sede, true);
-        crearUsuario(empresa, "consulta", "CONSULTA", sede, true);
+        crearUsuario(empresa, "consulta", "CONTADOR", sede, true);
         crearUsuario(empresa, "inactivo", "ADMINISTRADOR", sede, false);
         Categoria categoria = new Categoria();
         categoria.setEmpresa(empresa);
@@ -264,13 +264,14 @@ class SecurityIntegrationTests {
     void vistasDelAdministradorRenderizanFormulariosProtegidos() throws Exception {
         MockHttpSession sesion = login("admin");
         for (String ruta : new String[]{"/dashboard", "/inventario", "/movimientos", "/transferencias", "/categorias", "/productos", "/configuracion",
-                "/seleccionar-sede", "/categorias/nueva",
+                "/categorias/nueva",
                 "/productos/nuevo", "/categorias/editar/" + categoriaId, "/productos/editar/" + productoId}) {
             mvc.perform(get(ruta).session(sesion)).andExpect(status().isOk())
                     .andExpect(content().string(containsString("name=\"_csrf\"")));
         }
         mvc.perform(get("/categorias/cambiar-estado/" + categoriaId).session(sesion))
                 .andExpect(status().isMethodNotAllowed());
+        mvc.perform(get("/seleccionar-sede").session(sesion)).andExpect(redirectedUrl("/dashboard"));
     }
 
     @Test

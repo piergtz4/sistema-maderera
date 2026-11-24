@@ -55,7 +55,7 @@ public class DemoDataService {
                 "ADMINISTRADOR_GENERAL", null, password);
         Usuario adminIca = usuario(empresa, "admin.ica", "Administrador Ica",
                 "ADMINISTRADOR", ica, password);
-        usuario(empresa, "consulta", "Consulta Parcona", "CONSULTA", parcona, password);
+        usuario(empresa, "consulta", "Contador Parcona", "CONTADOR", parcona, password);
         Categoria maderas = categoria(empresa.getId(), "CAT-MAD", "Maderas");
         Categoria planchas = categoria(empresa.getId(), "CAT-PLA", "Planchas");
         Producto melamina = producto(empresa.getId(), "Plancha de melamina blanca", planchas.getId(), "UND", "120", "150");
