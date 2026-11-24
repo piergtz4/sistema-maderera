@@ -48,6 +48,7 @@ class EmpresaIntegrationTests {
         sedes.deleteAll();
         empresas.deleteAll();
         empresa = new Empresa();
+        empresa.setPlanComercial(PlanComercial.PROFESIONAL);
         empresa.setNombreComercial("Empresa inicial");
         empresa = empresas.save(empresa);
         parcona = new Sede();
@@ -100,6 +101,7 @@ class EmpresaIntegrationTests {
     @Test
     void seleccionDeSedeSeLimitaALaEmpresaAutenticada() throws Exception {
         Empresa otra = new Empresa();
+        otra.setPlanComercial(PlanComercial.PROFESIONAL);
         otra.setNombreComercial("Otra empresa");
         otra = empresas.save(otra);
         Sede ajena = new Sede();

@@ -52,6 +52,7 @@ class UsuarioIntegrationTests {
         sedes.deleteAll();
         empresas.deleteAll();
         empresa = new Empresa();
+        empresa.setPlanComercial(PlanComercial.PROFESIONAL);
         empresa.setNombreComercial("Empresa de prueba");
         empresa = empresas.save(empresa);
         parcona = sede(empresa, "Sede Parcona");
@@ -308,6 +309,7 @@ class UsuarioIntegrationTests {
     @Test
     void administradorLocalNoGestionaCuentasNiSedesAjenas() throws Exception {
         Empresa otra = new Empresa();
+        otra.setPlanComercial(PlanComercial.PROFESIONAL);
         otra.setNombreComercial("Otra empresa");
         otra = empresas.save(otra);
         Sede ajena = sede(otra, "Sede ajena");

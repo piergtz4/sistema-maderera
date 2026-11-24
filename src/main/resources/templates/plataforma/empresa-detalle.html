@@ -60,7 +60,7 @@
                 <a class="boton principal" th:href="@{/plataforma/empresas/{id}/plan(id=${empresa.id})}"
                    th:text="${planEmpresa == null ? 'Asignar plan' : 'Configurar plan'}">Configurar plan</a>
             </div>
-            <p th:if="${planEmpresa == null}" class="ayuda ayuda-listado">Esta empresa todavía no tiene un plan asignado.</p>
+            <p th:if="${planEmpresa == null}" class="ayuda ayuda-listado">Esta empresa todavía no tiene un plan asignado. Sus usuarios no podrán ingresar hasta que la plataforma configure uno.</p>
             <dl th:if="${planEmpresa != null}" class="datos-empresa">
                 <div><dt>Plan</dt><dd th:text="${planEmpresa.plan.nombre}"></dd></div>
                 <div><dt>Modalidad de pago</dt><dd th:text="${planEmpresa.periodicidad.nombre}"></dd></div>

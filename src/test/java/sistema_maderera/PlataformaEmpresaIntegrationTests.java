@@ -1,5 +1,7 @@
 package sistema_maderera;
 
+import sistema_maderera.entity.PlanComercial;
+
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,12 @@ import sistema_maderera.repository.UsuarioRepository;
 import sistema_maderera.security.AdministradorPlataformaPrincipal;
 import sistema_maderera.security.UsuarioPrincipal;
 import sistema_maderera.service.PlataformaEmpresaService;
+import sistema_maderera.service.SedeService;
+import sistema_maderera.service.UsuarioGestionService;
+import sistema_maderera.service.PlanEmpresaService;
+import sistema_maderera.dto.SedeForm;
+import sistema_maderera.dto.UsuarioForm;
+import sistema_maderera.entity.PeriodicidadPlan;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.containsString;
@@ -50,9 +58,13 @@ class PlataformaEmpresaIntegrationTests {
     @Autowired PasswordEncoder encoder;
     @Autowired EntityManager entityManager;
     @Autowired MockMvc mvc;
+    @Autowired SedeService gestionSedes;
+    @Autowired UsuarioGestionService gestionUsuarios;
+    @Autowired PlanEmpresaService planes;
 
     private PlataformaEmpresaForm formulario() {
         var form = new PlataformaEmpresaForm();
+        form.setPlan(PlanComercial.BASICO);
         form.getEmpresa().setNombreComercial("  Maderera   Nueva  ");
         form.getEmpresa().setRazonSocial("Maderera Nueva SAC");
         form.getEmpresa().setRuc("20987654321");
@@ -82,6 +94,8 @@ class PlataformaEmpresaIntegrationTests {
 
     private MockHttpServletRequestBuilder solicitud(String usuario, String ruc) {
         return post("/plataforma/empresas")
+                .param("plan", "BASICO").param("periodicidad", "MENSUAL")
+                .param("sedesAdicionales", "0").param("usuariosAdicionales", "0")
                 .param("empresa.nombreComercial", "Maderera Nueva")
                 .param("empresa.ruc", ruc)
                 .param("empresa.email", "contacto@example.com")
@@ -106,6 +120,8 @@ class PlataformaEmpresaIntegrationTests {
         assertThat(empresas.count()).isEqualTo(total + 1);
         assertThat(guardada.getNombreComercial()).isEqualTo("Maderera Nueva");
         assertThat(guardada.getEstado()).isTrue();
+        assertThat(guardada.getPlanComercial()).isEqualTo(PlanComercial.BASICO);
+        assertThat(guardada.getPeriodicidadPlan()).isEqualTo(PeriodicidadPlan.MENSUAL);
         assertThat(sedes.findByEmpresaIdOrderByEstadoDescNombreAsc(empresa.getId()))
                 .singleElement().satisfies(sede -> {
                     assertThat(sede.getNombre()).isEqualTo("Local principal");
@@ -179,6 +195,84 @@ class PlataformaEmpresaIntegrationTests {
         assertThat(sedes.findByEmpresaIdAndCodigoDocumentos(empresaId, 1)).isPresent();
     }
 
+    // Rechaza la falta de plan tanto en el navegador como en el servicio, sin altas parciales.
+    @Test
+    void noRegistraEmpresaSinPlan() throws Exception {
+        var actor = plataforma();
+        long totalEmpresas = empresas.count(), totalSedes = sedes.count(), totalUsuarios = usuarios.count();
+        mvc.perform(solicitud().with(user(actor)).with(csrf()).with(r -> { r.removeParameter("plan"); return r; }))
+                .andExpect(status().isOk()).andExpect(model().attributeHasFieldErrors("alta", "plan"))
+                .andExpect(content().string(containsString("Selecciona el plan de la empresa")))
+                .andExpect(content().string(not(containsString(CLAVE))));
+        var form = formulario(); form.setPlan(null);
+        assertThatThrownBy(() -> servicio.crear(form)).isInstanceOf(ReglaNegocioException.class).hasMessageContaining("plan de la empresa");
+        assertThat(empresas.count()).isEqualTo(totalEmpresas); assertThat(sedes.count()).isEqualTo(totalSedes);
+        assertThat(usuarios.count()).isEqualTo(totalUsuarios);
+    }
+
+    // Rechaza planes desconocidos y cantidades inválidas antes de crear la empresa.
+    @Test
+    void validaContratoInicial() throws Exception {
+        long total = empresas.count();
+        mvc.perform(solicitud().with(user(plataforma())).with(csrf()).with(r -> { r.setParameter("plan", "INVENTADO"); return r; }))
+                .andExpect(status().isOk()).andExpect(model().attributeHasFieldErrors("alta", "plan"));
+        var form = formulario(); form.setSedesAdicionales(-1);
+        assertThatThrownBy(() -> servicio.crear(form)).isInstanceOf(ReglaNegocioException.class).hasMessageContaining("negativas");
+        form.setSedesAdicionales(0); form.setPeriodicidad(null);
+        assertThatThrownBy(() -> servicio.crear(form)).isInstanceOf(ReglaNegocioException.class).hasMessageContaining("modalidad");
+        assertThat(empresas.count()).isEqualTo(total);
+    }
+
+    // Guarda el contrato completo y calcula sus importes con los precios del sistema.
+    @Test
+    void registraPlanYAdicionalesConLaEmpresa() {
+        var form = formulario(); form.setPlan(PlanComercial.PROFESIONAL); form.setPeriodicidad(PeriodicidadPlan.ANUAL);
+        form.setSedesAdicionales(1); form.setUsuariosAdicionales(2);
+        var empresa = servicio.crear(form);
+        var resumen = planes.resumen(empresa.getId());
+        assertThat(resumen.plan()).isEqualTo(PlanComercial.PROFESIONAL);
+        assertThat(resumen.periodicidad()).isEqualTo(PeriodicidadPlan.ANUAL);
+        assertThat(resumen.sedesTotales()).isEqualTo(4); assertThat(resumen.usuariosTotales()).isEqualTo(9);
+        assertThat(resumen.totalMensual()).isEqualByComparingTo("104.00");
+        assertThat(resumen.totalPeriodo()).isEqualByComparingTo("1248.00");
+        assertThat(planes.uso(empresa.getId()).sedesActivas()).isEqualTo(1);
+        assertThat(planes.uso(empresa.getId()).usuariosActivos()).isEqualTo(1);
+    }
+
+    // El Básico cuenta la sede y la cuenta iniciales desde el momento del registro.
+    @Test
+    void basicoAplicaLimitesDesdeElRegistro() {
+        var empresa = servicio.crear(formulario());
+        var sede = sedes.findByEmpresaIdAndCodigoDocumentos(empresa.getId(), 1).orElseThrow();
+        var general = usuarios.findByUsuarioIgnoreCase("nueva.admin").orElseThrow();
+        var extra = new SedeForm(); extra.setNombre("Segunda sede"); extra.setDepartamento("Lima"); extra.setProvincia("Lima"); extra.setDistrito("Ate");
+        assertThatThrownBy(() -> gestionSedes.guardar(empresa.getId(), extra))
+                .isInstanceOf(ReglaNegocioException.class).hasMessageContaining("1 sede activa");
+        for (int i = 0; i < 3; i++) {
+            var form = new UsuarioForm(); form.setNombre("Cuenta " + i); form.setUsuario("nueva.cuenta" + i);
+            form.setRol("CONTADOR"); form.setSedeId(sede.getId()); form.setPassword(CLAVE); form.setConfirmarPassword(CLAVE);
+            if (i < 2) gestionUsuarios.guardar(empresa.getId(), general.getId(), form);
+            else assertThatThrownBy(() -> gestionUsuarios.guardar(empresa.getId(), general.getId(), form))
+                    .isInstanceOf(ReglaNegocioException.class).hasMessageContaining("3 cuentas activas");
+        }
+        assertThat(planes.uso(empresa.getId()).usuariosActivos()).isEqualTo(3);
+    }
+
+    // Las empresas antiguas sin plan pierden acceso hasta que la plataforma asigne uno.
+    @Test
+    void empresaSinPlanNoPuedeIngresarNiMantenerSesion() throws Exception {
+        var empresa = servicio.crear(formulario());
+        var sesion = (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("usuario", "nueva.admin").param("password", CLAVE))
+                .andExpect(status().isOk()).andReturn().getRequest().getSession(false);
+        empresa.setPlanComercial(null); empresas.saveAndFlush(empresa);
+        mvc.perform(get("/usuarios").session(sesion)).andExpect(redirectedUrl("/?sesion"));
+        mvc.perform(post("/login").with(csrf()).param("usuario", "nueva.admin").param("password", CLAVE))
+                .andExpect(status().isUnauthorized());
+        empresa.setPlanComercial(PlanComercial.BASICO); empresas.saveAndFlush(empresa);
+        mvc.perform(post("/login").with(csrf()).param("usuario", "nueva.admin").param("password", CLAVE))
+                .andExpect(status().isOk());
+    }
+
     // Conserva los datos corregibles sin devolver las contraseñas en el HTML.
     @Test
     void muestraErroresSinExponerLaClave() throws Exception {
@@ -224,6 +318,7 @@ class PlataformaEmpresaIntegrationTests {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void revierteElAltaSiElUsuarioYaExiste() {
         var existente = new Empresa();
+        existente.setPlanComercial(PlanComercial.PROFESIONAL);
         existente.setNombreComercial("Empresa existente para prueba");
         existente = empresas.saveAndFlush(existente);
         var cuenta = new Usuario();

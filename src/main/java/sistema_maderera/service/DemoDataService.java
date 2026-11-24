@@ -47,6 +47,7 @@ public class DemoDataService {
         Empresa empresa = empresas.findFirstByOrderByIdAsc().orElseGet(() -> {
             Empresa nueva = new Empresa();
             nueva.setNombreComercial("Mi Empresa Maderera");
+            nueva.setPlanComercial(PlanComercial.PROFESIONAL);
             return empresas.save(nueva);
         });
         Sede parcona = sede(empresa, "Sede Parcona", "Parcona");

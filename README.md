@@ -20,6 +20,8 @@ Abrir http://localhost:8080 en el navegador. Flyway aplica las migraciones pendi
 
 ## Cuentas y sedes
 
+El registro de una empresa exige elegir un plan y guarda su capacidad junto con la primera sede y el administrador general. Las empresas sin plan no pueden ingresar al sistema ni crear o activar cuentas o sedes hasta que la plataforma les asigne uno.
+
 - El administrador general gestiona todas las sedes de su empresa y asigna los accesos desde Usuarios.
 - El administrador de sede y el contador pueden tener una o varias sedes autorizadas, con permiso de consulta o de gestión en cada una.
 - El contador consulta inventario y movimientos, exporta el inventario y, con gestión, registra compras y proveedores. No realiza ventas ni ajustes manuales de stock.

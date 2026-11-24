@@ -169,7 +169,7 @@ class EliminacionIntegrationTests {
     // Rechaza eliminar registros de otra empresa aunque se cambie la dirección manualmente.
     @Test
     void aislamientoEntreEmpresas() throws Exception {
-        var otra = new Empresa(); otra.setNombreComercial("Empresa ajena"); empresas.saveAndFlush(otra);
+        var otra = new Empresa(); otra.setPlanComercial(PlanComercial.PROFESIONAL); otra.setNombreComercial("Empresa ajena"); empresas.saveAndFlush(otra);
         var sede = new Sede(); sede.setEmpresa(otra); sede.setCodigoDocumentos(1); sede.setNombre("Local ajeno");
         sede.setDepartamento("Ica"); sede.setProvincia("Ica"); sede.setDistrito("Ica"); sedes.saveAndFlush(sede);
         var cuenta = new Usuario(); cuenta.setEmpresa(otra); cuenta.setSede(sede); cuenta.setNombre("Cuenta ajena");

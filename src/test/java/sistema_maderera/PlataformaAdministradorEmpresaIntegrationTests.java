@@ -73,6 +73,7 @@ class PlataformaAdministradorEmpresaIntegrationTests {
 
     private Empresa crearEmpresa(String nombre, String ruc, String usuario) {
         var form = new PlataformaEmpresaForm();
+        form.setPlan(PlanComercial.PROFESIONAL);
         form.getEmpresa().setNombreComercial(nombre);
         form.getEmpresa().setRuc(ruc);
         form.getSede().setNombre("Sede de " + nombre);

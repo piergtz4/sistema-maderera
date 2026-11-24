@@ -20,6 +20,9 @@ import sistema_maderera.dto.EmpresaForm;
 import sistema_maderera.exception.ReglaNegocioException;
 import sistema_maderera.security.AdministradorPlataformaPrincipal;
 import sistema_maderera.service.PlataformaEmpresaService;
+import sistema_maderera.service.PlanEmpresaService;
+import sistema_maderera.entity.PlanComercial;
+import sistema_maderera.entity.PeriodicidadPlan;
 
 @Controller
 @RequestMapping("/plataforma/empresas")
@@ -35,7 +38,8 @@ public class PlataformaEmpresaController {
         binder.setAllowedFields("empresa.nombreComercial", "empresa.razonSocial", "empresa.ruc",
                 "empresa.email", "empresa.telefono", "empresa.direccion", "sede.nombre",
                 "sede.departamento", "sede.provincia", "sede.distrito", "sede.direccion",
-                "sede.telefono", "nombreAdministrador", "usuario", "password", "confirmarPassword");
+                "sede.telefono", "nombreAdministrador", "usuario", "password", "confirmarPassword",
+                "plan", "periodicidad", "sedesAdicionales", "usuariosAdicionales");
     }
 
     @InitBinder("empresa")
@@ -86,7 +90,7 @@ public class PlataformaEmpresaController {
 
     @GetMapping("/nueva")
     public String nueva(@AuthenticationPrincipal AdministradorPlataformaPrincipal administrador, Model model) {
-        model.addAttribute("nombreAdministrador", administrador.getNombre());
+        cargarAlta(administrador, model);
         model.addAttribute("alta", new PlataformaEmpresaForm());
         return "plataforma/empresa-form";
     }
@@ -99,7 +103,7 @@ public class PlataformaEmpresaController {
             try {
                 var empresa = empresas.crear(form);
                 flash.addFlashAttribute("mensaje", "Empresa " + empresa.getNombreComercial()
-                        + " registrada con su primera sede y administrador general.");
+                        + " registrada con el plan " + empresa.getPlanComercial().getNombre() + ", su primera sede y administrador general.");
                 return "redirect:/plataforma";
             } catch (ReglaNegocioException e) {
                 errores.reject("negocio", e.getMessage());
@@ -109,7 +113,15 @@ public class PlataformaEmpresaController {
         }
         form.setPassword(null);
         form.setConfirmarPassword(null);
-        model.addAttribute("nombreAdministrador", administrador.getNombre());
+        cargarAlta(administrador, model);
         return "plataforma/empresa-form";
+    }
+
+    private void cargarAlta(AdministradorPlataformaPrincipal administrador, Model model) {
+        model.addAttribute("nombreAdministrador", administrador.getNombre());
+        model.addAttribute("planes", PlanComercial.values());
+        model.addAttribute("periodicidades", PeriodicidadPlan.values());
+        model.addAttribute("precioSede", PlanEmpresaService.PRECIO_SEDE);
+        model.addAttribute("precioUsuario", PlanEmpresaService.PRECIO_USUARIO);
     }
 }

@@ -606,7 +606,7 @@ class ComercialIntegrationTests {
         bbva.setBanco("BBVA"); bbva.setNumero("1001234567890");
         cuentas.agregar(empresaId, bbva);
         cuentas.estado(empresaId, cuentas.listar(empresaId).getLast().getId(), false);
-        Empresa otraEmpresa = new Empresa(); otraEmpresa.setNombreComercial("Otra empresa"); empresas.save(otraEmpresa);
+        Empresa otraEmpresa = new Empresa(); otraEmpresa.setPlanComercial(PlanComercial.PROFESIONAL); otraEmpresa.setNombreComercial("Otra empresa"); empresas.save(otraEmpresa);
         CuentaEmpresa cuentaAjena = new CuentaEmpresa(); cuentaAjena.setEmpresa(otraEmpresa);
         cuentaAjena.setBanco("PICHINCHA"); cuentaAjena.setNumero("9001234567890"); cuentaRepository.save(cuentaAjena);
 
@@ -668,7 +668,7 @@ class ComercialIntegrationTests {
         nueva.setCelularYape(""); nueva.setBanco("INTERBANK");
         cuentas.agregar(empresaId, nueva);
         assertThatThrownBy(() -> cuentas.agregar(empresaId, nueva)).isInstanceOf(ReglaNegocioException.class).hasMessageContaining("registrada");
-        Empresa otra = new Empresa(); otra.setNombreComercial("Otra empresa"); empresas.save(otra);
+        Empresa otra = new Empresa(); otra.setPlanComercial(PlanComercial.PROFESIONAL); otra.setNombreComercial("Otra empresa"); empresas.save(otra);
         assertThatThrownBy(() -> cuentas.buscar(otra.getId(), cuentaId)).isInstanceOf(RecursoNoEncontradoException.class);
         mvc.perform(get("/configuracion").session(login("admin"))).andExpect(status().isOk())
                 .andExpect(content().string(containsString("987654321")));
@@ -961,6 +961,7 @@ class ComercialIntegrationTests {
     @Test
     void clienteDeOtraEmpresaNoEsVisibleNiEditable() {
         Empresa otra = new Empresa();
+        otra.setPlanComercial(PlanComercial.PROFESIONAL);
         otra.setNombreComercial("Otra empresa");
         otra = empresas.save(otra);
         Cliente ajeno = clientes.guardar(otra.getId(), cliente("Ajeno", TipoIdentificacion.DNI, "12345678"));

@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Min;
+import sistema_maderera.entity.PlanComercial;
+import sistema_maderera.entity.PeriodicidadPlan;
 
 public class PlataformaEmpresaForm {
     @Valid
@@ -14,6 +17,20 @@ public class PlataformaEmpresaForm {
     @Valid
     @NotNull(message = "Completa los datos de la primera sede.")
     private SedeForm sede = new SedeForm();
+
+    @NotNull(message = "Selecciona el plan de la empresa.")
+    private PlanComercial plan;
+
+    @NotNull(message = "Selecciona la modalidad de pago.")
+    private PeriodicidadPlan periodicidad = PeriodicidadPlan.MENSUAL;
+
+    @NotNull(message = "Ingresa la cantidad de sedes adicionales.")
+    @Min(value = 0, message = "Las sedes adicionales no pueden ser negativas.")
+    private Integer sedesAdicionales = 0;
+
+    @NotNull(message = "Ingresa la cantidad de cuentas adicionales.")
+    @Min(value = 0, message = "Las cuentas adicionales no pueden ser negativas.")
+    private Integer usuariosAdicionales = 0;
 
     @NotBlank(message = "Administrador: Ingresa su nombre.")
     @Size(max = 100, message = "Administrador: Máximo 100 caracteres.")
@@ -35,6 +52,14 @@ public class PlataformaEmpresaForm {
     public void setEmpresa(EmpresaForm empresa) { this.empresa = empresa; }
     public SedeForm getSede() { return sede; }
     public void setSede(SedeForm sede) { this.sede = sede; }
+    public PlanComercial getPlan() { return plan; }
+    public void setPlan(PlanComercial plan) { this.plan = plan; }
+    public PeriodicidadPlan getPeriodicidad() { return periodicidad; }
+    public void setPeriodicidad(PeriodicidadPlan periodicidad) { this.periodicidad = periodicidad; }
+    public Integer getSedesAdicionales() { return sedesAdicionales; }
+    public void setSedesAdicionales(Integer sedesAdicionales) { this.sedesAdicionales = sedesAdicionales; }
+    public Integer getUsuariosAdicionales() { return usuariosAdicionales; }
+    public void setUsuariosAdicionales(Integer usuariosAdicionales) { this.usuariosAdicionales = usuariosAdicionales; }
     public String getNombreAdministrador() { return nombreAdministrador; }
     public void setNombreAdministrador(String nombreAdministrador) { this.nombreAdministrador = nombreAdministrador; }
     public String getUsuario() { return usuario; }

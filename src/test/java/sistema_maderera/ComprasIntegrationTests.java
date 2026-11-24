@@ -221,7 +221,7 @@ class ComprasIntegrationTests {
         form.setNombre("Modificado");
         proveedores.guardar(empresaId, form);
         assertThatThrownBy(() -> proveedores.guardar(empresaId, form)).isInstanceOf(ReglaNegocioException.class);
-        Empresa otra = new Empresa(); otra.setNombreComercial("Otra empresa"); otra = empresas.save(otra);
+        Empresa otra = new Empresa(); otra.setPlanComercial(PlanComercial.PROFESIONAL); otra.setNombreComercial("Otra empresa"); otra = empresas.save(otra);
         var ajeno = proveedores.guardar(otra.getId(), proveedor("Ajeno", "20999999999"));
         assertThatThrownBy(() -> proveedores.buscar(empresaId, ajeno.getId())).isInstanceOf(RecursoNoEncontradoException.class);
         var compra = compra("OTRO-1"); compra.setProveedorId(ajeno.getId());

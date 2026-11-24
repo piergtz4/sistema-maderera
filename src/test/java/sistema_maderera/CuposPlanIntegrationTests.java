@@ -221,7 +221,7 @@ class CuposPlanIntegrationTests {
     // Cada empresa utiliza su propio cupo, independientemente de los registros de otras empresas.
     @Test
     void noMezclaEmpresasNiCuentaRegistrosInactivos() {
-        var otra = new Empresa(); otra.setNombreComercial("Otra empresa"); empresas.saveAndFlush(otra);
+        var otra = new Empresa(); otra.setPlanComercial(PlanComercial.PROFESIONAL); otra.setNombreComercial("Otra empresa"); empresas.saveAndFlush(otra);
         for (int i = 0; i < 5; i++) {
             sede(otra, "Ajena " + i, true);
             cuenta(otra, "ajeno" + i, "ADMINISTRADOR_GENERAL", true);
@@ -235,14 +235,20 @@ class CuposPlanIntegrationTests {
         assertThat(sedes.countByEmpresaIdAndEstadoTrue(otra.getId())).isEqualTo(5);
     }
 
-    // Mantiene la gestión anterior mientras la plataforma todavía no asigne un plan.
+    // Bloquea altas y reactivaciones mientras la plataforma no asigne un plan.
     @Test
-    void conservaElFuncionamientoDeEmpresasSinPlan() {
+    void bloqueaAltasYReactivacionesDeEmpresasSinPlan() {
         empresa.setPlanComercial(null); empresas.saveAndFlush(empresa);
-        gestionSedes.cambiarEstado(empresa.getId(), inactiva.getId());
-        gestionUsuarios.cambiarEstado(empresa.getId(), general.getId(), usuarioInactivo.getId());
-        assertThat(planes.uso(empresa.getId()).sedesActivas()).isEqualTo(2);
-        assertThat(planes.uso(empresa.getId()).usuariosActivos()).isEqualTo(4);
+        assertThatThrownBy(() -> gestionSedes.cambiarEstado(empresa.getId(), inactiva.getId()))
+                .isInstanceOf(ReglaNegocioException.class).hasMessageContaining("no tiene un plan asignado");
+        assertThatThrownBy(() -> gestionUsuarios.cambiarEstado(empresa.getId(), general.getId(), usuarioInactivo.getId()))
+                .isInstanceOf(ReglaNegocioException.class).hasMessageContaining("no tiene un plan asignado");
+        assertThatThrownBy(() -> gestionSedes.guardar(empresa.getId(), nuevaSede("Sin plan")))
+                .isInstanceOf(ReglaNegocioException.class).hasMessageContaining("no tiene un plan asignado");
+        assertThatThrownBy(() -> gestionUsuarios.guardar(empresa.getId(), general.getId(), nuevaCuenta("sin.plan")))
+                .isInstanceOf(ReglaNegocioException.class).hasMessageContaining("no tiene un plan asignado");
+        assertThat(planes.uso(empresa.getId()).sedesActivas()).isEqualTo(1);
+        assertThat(planes.uso(empresa.getId()).usuariosActivos()).isEqualTo(3);
     }
 
     // La reactivación desde la plataforma también respeta el cupo de cuentas de la empresa.

@@ -23,6 +23,7 @@ public class UsuarioPrincipal extends User {
         super(usuario.getUsuario(), usuario.getPassword(),
                 Boolean.TRUE.equals(usuario.getEstado())
                         && Boolean.TRUE.equals(usuario.getEmpresa().getEstado())
+                        && usuario.getEmpresa().getPlanComercial() != null
                         && tieneSedeActiva,
                 true, true, true,
                 List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getRol())));

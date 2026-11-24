@@ -50,6 +50,7 @@ class SedeIntegrationTests {
         sedes.deleteAll();
         empresas.deleteAll();
         empresa = new Empresa();
+        empresa.setPlanComercial(PlanComercial.PROFESIONAL);
         empresa.setNombreComercial("Empresa de prueba");
         empresa = empresas.save(empresa);
         parcona = sede(empresa, "Sede Parcona", "Parcona");
@@ -216,6 +217,7 @@ class SedeIntegrationTests {
     @Test
     void sedesAjenasYAdministradorLocalNoPuedenGestionarse() throws Exception {
         Empresa otra = new Empresa();
+        otra.setPlanComercial(PlanComercial.PROFESIONAL);
         otra.setNombreComercial("Otra empresa");
         otra = empresas.save(otra);
         Sede ajena = sede(otra, "Sede ajena", "Lima");

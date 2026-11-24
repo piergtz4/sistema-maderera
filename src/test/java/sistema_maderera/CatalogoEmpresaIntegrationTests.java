@@ -79,6 +79,7 @@ class CatalogoEmpresaIntegrationTests {
 
     private Empresa empresa(String nombre) {
         Empresa empresa = new Empresa();
+        empresa.setPlanComercial(PlanComercial.PROFESIONAL);
         empresa.setNombreComercial(nombre);
         return empresas.save(empresa);
     }

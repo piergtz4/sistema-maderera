@@ -1,5 +1,7 @@
 package sistema_maderera;
 
+import sistema_maderera.entity.PlanComercial;
+
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,6 +66,7 @@ class PlataformaEmpresaGestionIntegrationTests {
 
     private Empresa crear(String nombre, String ruc, String usuario) {
         var form = new PlataformaEmpresaForm();
+        form.setPlan(PlanComercial.PROFESIONAL);
         form.getEmpresa().setNombreComercial(nombre);
         form.getEmpresa().setRuc(ruc);
         form.getSede().setNombre("Local principal");

@@ -203,7 +203,7 @@ class PermisosSedeIntegrationTests {
                 .andExpect(flash().attributeExists("error"));
         sesion.setAttribute("sedeTrabajoId", surId);
         mvc.perform(get("/inventario").session(sesion)).andExpect(model().attribute("sedeId", norteId));
-        var otra = new Empresa(); otra.setNombreComercial("Otra empresa"); otra = empresas.save(otra);
+        var otra = new Empresa(); otra.setPlanComercial(PlanComercial.PROFESIONAL); otra.setNombreComercial("Otra empresa"); otra = empresas.save(otra);
         var ajena = new Sede(); ajena.setEmpresa(otra); ajena.setNombre("Local ajeno"); ajena.setCodigoDocumentos(1);
         ajena.setDepartamento("Lima"); ajena.setProvincia("Lima"); ajena.setDistrito("Lima"); ajena = sedes.save(ajena);
         var invalido = form("intruso", "CONTADOR", List.of(ajena.getId()), List.of());

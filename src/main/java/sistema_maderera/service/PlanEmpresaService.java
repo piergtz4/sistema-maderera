@@ -62,7 +62,7 @@ public class PlanEmpresaService {
 
     // Se comprueba dentro de la operación que ya mantiene bloqueada la empresa.
     public void validarCupoSede(Empresa empresa) {
-        if (empresa.getPlanComercial() == null) return;
+        exigirPlan(empresa);
         long limite = (long) empresa.getPlanComercial().getSedes() + empresa.getSedesAdicionales();
         if (sedes.activasParaCupo(empresa.getId()).size() >= limite) {
             throw new ReglaNegocioException("Tu plan permite hasta " + limite
@@ -73,7 +73,7 @@ public class PlanEmpresaService {
 
     // Todas las cuentas activas de la empresa consumen cupo, incluido el administrador general.
     public void validarCupoUsuario(Empresa empresa) {
-        if (empresa.getPlanComercial() == null) return;
+        exigirPlan(empresa);
         long limite = (long) empresa.getPlanComercial().getUsuarios() + empresa.getUsuariosAdicionales();
         if (usuarios.activosParaCupo(empresa.getId()).size() >= limite) {
             throw new ReglaNegocioException("Tu plan permite hasta " + limite
@@ -123,6 +123,11 @@ public class PlanEmpresaService {
 
     private Empresa buscar(Long id) {
         return empresas.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
+    }
+
+    private void exigirPlan(Empresa empresa) {
+        if (empresa.getPlanComercial() == null)
+            throw new ReglaNegocioException("La empresa no tiene un plan asignado. Solicita al administrador de plataforma que lo configure antes de crear o activar sedes y usuarios.");
     }
 
     public record ResumenPlan(PlanComercial plan, PeriodicidadPlan periodicidad, int sedesAdicionales,

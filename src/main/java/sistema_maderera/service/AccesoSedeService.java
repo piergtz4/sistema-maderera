@@ -104,6 +104,7 @@ public class AccesoSedeService {
 
     private boolean habilitado(Usuario usuario) {
         return Boolean.TRUE.equals(usuario.getEstado()) && Boolean.TRUE.equals(usuario.getEmpresa().getEstado())
+                && usuario.getEmpresa().getPlanComercial() != null
                 && List.of("ADMINISTRADOR_GENERAL", "ADMINISTRADOR", "CONTADOR").contains(usuario.getRol());
     }
 

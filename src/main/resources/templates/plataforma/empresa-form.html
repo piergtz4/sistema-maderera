@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MADERPRO | Registrar empresa</title>
     <link rel="stylesheet" th:href="@{/css/plataforma.css}">
+    <script defer th:src="@{/js/plataforma-plan.js}"></script>
 </head>
 <body>
     <header class="encabezado">
@@ -30,8 +31,9 @@
                 <h1>Registrar empresa</h1>
                 <a class="enlace" th:href="@{/plataforma}">Volver a empresas</a>
             </div>
-            <form class="formulario" th:action="@{/plataforma/empresas}" th:object="${alta}" method="post">
-                <p class="ayuda">Registra la empresa, su primera sede y la cuenta de su administrador general. Los campos con * son obligatorios.</p>
+            <form id="formularioPlan" class="formulario" th:action="@{/plataforma/empresas}" th:object="${alta}" method="post"
+                  th:attr="data-precio-sede=${precioSede},data-precio-usuario=${precioUsuario}">
+                <p class="ayuda">Registra la empresa con su plan, primera sede y administrador general. Los campos con * son obligatorios.</p>
                 <div class="aviso error" role="alert" th:if="${#fields.hasAnyErrors()}">
                     <p>No se pudo registrar la empresa. Revisa los datos e ingresa nuevamente las contraseñas.</p>
                     <ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul>
@@ -52,6 +54,42 @@
                         <div class="campo"><label for="direccion">Dirección de la empresa</label>
                             <input id="direccion" th:field="*{empresa.direccion}" maxlength="255"></div>
                     </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Plan contratado</legend>
+                    <div class="campos">
+                        <div class="campo"><label for="plan">Plan *</label>
+                            <select id="plan" th:field="*{plan}" required>
+                                <option value="">Selecciona un plan</option>
+                                <option th:each="opcion : ${planes}" th:value="${opcion}"
+                                        th:text="${opcion.nombre + ' · ' + opcion.sedes + (opcion.sedes == 1 ? ' sede' : ' sedes') + ' y ' + opcion.usuarios + ' cuentas · S/ ' + opcion.precioMensual + ' al mes'}"
+                                        th:attr="data-precio=${opcion.precioMensual},data-sedes=${opcion.sedes},data-usuarios=${opcion.usuarios},data-ventas=${opcion.ventasMensuales}"></option>
+                            </select>
+                        </div>
+                        <div class="campo"><label for="periodicidad">Modalidad de pago *</label>
+                            <select id="periodicidad" th:field="*{periodicidad}" required>
+                                <option th:each="opcion : ${periodicidades}" th:value="${opcion}" th:text="${opcion.nombre}" th:attr="data-meses=${opcion.meses}"></option>
+                            </select>
+                        </div>
+                        <div class="campo"><label for="sedesAdicionales">Sedes adicionales *</label>
+                            <input id="sedesAdicionales" th:field="*{sedesAdicionales}" type="number" min="0" step="1" required>
+                            <p class="ayuda">S/ <span th:text="${precioSede}"></span> al mes por sede adicional.</p>
+                        </div>
+                        <div class="campo"><label for="usuariosAdicionales">Cuentas adicionales *</label>
+                            <input id="usuariosAdicionales" th:field="*{usuariosAdicionales}" type="number" min="0" step="1" required>
+                            <p class="ayuda">S/ <span th:text="${precioUsuario}"></span> al mes por cuenta adicional.</p>
+                        </div>
+                    </div>
+                    <div id="resumenPlan" class="resumen-plan separacion" aria-live="polite" hidden>
+                        <h2>Capacidad y precio</h2>
+                        <dl class="datos-empresa">
+                            <div><dt>Sedes activas contratadas</dt><dd id="totalSedes"></dd></div>
+                            <div><dt>Cuentas activas contratadas</dt><dd id="totalUsuarios"></dd></div>
+                            <div><dt>Total mensual</dt><dd id="totalMensual"></dd></div>
+                            <div><dt id="etiquetaPeriodo">Total del mes</dt><dd id="totalPeriodo"></dd></div>
+                        </dl>
+                    </div>
+                    <p class="ayuda">La primera sede y el administrador general ya están incluidos en estos cupos. Solo la plataforma puede modificar el plan y los adicionales. Registrar la empresa no realiza un cobro.</p>
                 </fieldset>
                 <fieldset>
                     <legend>Primera sede</legend>

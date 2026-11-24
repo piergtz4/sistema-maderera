@@ -1,5 +1,7 @@
 package sistema_maderera;
 
+import sistema_maderera.entity.PlanComercial;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -62,6 +64,7 @@ class SecurityIntegrationTests {
         sedes.deleteAll();
         empresas.deleteAll();
         Empresa empresa = new Empresa();
+        empresa.setPlanComercial(PlanComercial.PROFESIONAL);
         empresa.setNombreComercial("Empresa de prueba");
         empresa = empresas.save(empresa);
         Sede sede = new Sede();

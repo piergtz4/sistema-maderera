@@ -8,13 +8,16 @@
     const usuarios = document.getElementById('usuariosAdicionales');
     const resumen = document.getElementById('resumenPlan');
     const moneda = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' });
-    const escribir = (id, valor) => { document.getElementById(id).textContent = valor; };
+    const escribir = (id, valor) => {
+        const elemento = document.getElementById(id);
+        if (elemento) elemento.textContent = valor;
+    };
 
     function actualizar() {
         const opcion = plan.selectedOptions[0];
         const modalidad = periodicidad.selectedOptions[0];
         const cantidades = [sedes.valueAsNumber, usuarios.valueAsNumber];
-        if (!opcion || !modalidad || !cantidades.every(n => Number.isInteger(n) && n >= 0 && n <= 2147483647)) {
+        if (!opcion || !opcion.value || !modalidad || !cantidades.every(n => Number.isInteger(n) && n >= 0 && n <= 2147483647)) {
             resumen.hidden = true;
             return;
         }

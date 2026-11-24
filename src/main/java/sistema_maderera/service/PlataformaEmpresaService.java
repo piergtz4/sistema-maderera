@@ -10,6 +10,7 @@ import sistema_maderera.dto.EmpresaForm;
 import sistema_maderera.dto.PlataformaEmpresaForm;
 import sistema_maderera.dto.SedeForm;
 import sistema_maderera.dto.UsuarioForm;
+import sistema_maderera.dto.PlanEmpresaForm;
 import sistema_maderera.exception.ReglaNegocioException;
 import sistema_maderera.exception.RecursoNoEncontradoException;
 import sistema_maderera.repository.EmpresaRepository;
@@ -22,13 +23,15 @@ public class PlataformaEmpresaService {
     private final SedeService sedes;
     private final UsuarioGestionService usuarios;
     private final ValidacionService validacion;
+    private final PlanEmpresaService planes;
 
     public PlataformaEmpresaService(EmpresaRepository empresas, SedeService sedes,
-            UsuarioGestionService usuarios, ValidacionService validacion) {
+            UsuarioGestionService usuarios, ValidacionService validacion, PlanEmpresaService planes) {
         this.empresas = empresas;
         this.sedes = sedes;
         this.usuarios = usuarios;
         this.validacion = validacion;
+        this.planes = planes;
     }
 
     public List<Empresa> listar() {
@@ -75,8 +78,19 @@ public class PlataformaEmpresaService {
         var datos = form.getEmpresa();
         validarRuc(datos.getRuc(), null);
 
+        var contrato = new PlanEmpresaForm();
+        contrato.setPlan(form.getPlan());
+        contrato.setPeriodicidad(form.getPeriodicidad());
+        contrato.setSedesAdicionales(form.getSedesAdicionales());
+        contrato.setUsuariosAdicionales(form.getUsuariosAdicionales());
+        var resumen = planes.calcular(contrato);
+
         Empresa empresa = new Empresa();
         aplicarDatos(empresa, datos);
+        empresa.setPlanComercial(resumen.plan());
+        empresa.setPeriodicidadPlan(resumen.periodicidad());
+        empresa.setSedesAdicionales(resumen.sedesAdicionales());
+        empresa.setUsuariosAdicionales(resumen.usuariosAdicionales());
         empresas.saveAndFlush(empresa);
 
         SedeForm sede = new SedeForm();
