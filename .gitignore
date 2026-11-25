@@ -8,3 +8,4 @@
 .project
 .settings/
 .mvn/wrapper/maven-wrapper.jar
+/.venv-sast/
