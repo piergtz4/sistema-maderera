@@ -29,6 +29,8 @@
     <properties>
         <java.version>21</java.version>
         <poi.version>5.5.1</poi.version>
+        <tomcat.version>11.0.29</tomcat.version>
+        <mysql.version>26.10.0</mysql.version>
     </properties>
     <dependencies>
         <dependency>
@@ -103,6 +105,20 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <addResources>true</addResources>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>13.0.0</version>
+                <configuration>
+                    <formats>
+                        <format>HTML</format>
+                        <format>JSON</format>
+                    </formats>
+                    <prettyPrint>true</prettyPrint>
+                    <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
                 </configuration>
             </plugin>
         </plugins>

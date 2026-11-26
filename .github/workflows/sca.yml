@@ -1,0 +1,41 @@
+name: Revisión SCA
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sca:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+        
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@v7
+
+      - name: Preparar Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Analizar dependencias
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          test -n "$NVD_API_KEY"
+          sh ./mvnw -B -ntp dependency-check:check
+
+      - name: Conservar reportes SCA
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reporte-sca
+          path: |
+            target/dependency-check-report.html
+            target/dependency-check-report.json
+          if-no-files-found: error
